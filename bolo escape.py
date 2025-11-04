@@ -177,3 +177,4 @@ game.quit()
 #add shooting meggio
 #add pause
 #play audio
+#path relativi immagini
