@@ -9,12 +9,18 @@ def centro(x,y,size):
     cy = y + size/2
     return cx,cy
 #funzione che calcola se sei colpito o meno
-def hit(c1,c2,s1,s2):
+def overlap(c1,c2,s1,s2):
     
     if  np.abs(c1[0]-c2[0]) <= (s1+s2)/2 and np.abs(c1[1]-c2[1]) <= (s1+s2)/2:
         return True
     else:
         return False
+
+def hit(x1,x2,y1,y2,size1,size2):
+    c1 = centro(x1,y1,size1)
+    c2 = centro(x2,y2,size2)
+    return overlap(c1,c2,size1,size2)
+
 #inizializzazione gioco
 game.init()
 running = True
@@ -58,11 +64,9 @@ Cla_y=0
 Claudio=game.image.load("bonati_Claudio-Bonati.jpg")
 Claudio=game.transform.smoothscale(Claudio,(Cla_size,Cla_size))
 #array posizioni del players
-last_5_Xposition = np.array([])
-last_5_Yposition = np.array([])
-
-
-
+last_n_Xposition = np.array([])
+last_n_Yposition = np.array([])
+#tetteculotetteculotetteculotetteculotetteculotetteculotetteculotetteculotetteculotetteculotetteculotetteculotetteculotetteculo
 while running:
 
     for event in game.event.get():
@@ -100,14 +104,14 @@ while running:
         x-=speed
 
     #claudio movement
-    last_5_Xposition=np.append(last_5_Xposition,x)
-    last_5_Yposition=np.append(last_5_Yposition,y)
-    if len(last_5_Xposition) > 24:
-        last_5_Xposition=last_5_Xposition[1:]
-        last_5_Yposition=last_5_Yposition[1:]
-        #print(last_5_Xposition)
-    Cla_Xdir= np.sign(-Cla_x + last_5_Xposition[-1])
-    Cla_Ydir= np.sign(- Cla_y +last_5_Yposition[-1])
+    last_n_Xposition=np.append(last_n_Xposition,x)
+    last_n_Yposition=np.append(last_n_Yposition,y)
+    if len(last_n_Xposition) > 24:
+        last_n_Xposition=last_n_Xposition[1:]
+        last_n_Yposition=last_n_Yposition[1:]
+        #print(last_n_Xposition)
+    Cla_Xdir= np.sign(-Cla_x + last_n_Xposition[-1])
+    Cla_Ydir= np.sign(- Cla_y +last_n_Yposition[-1])
     if score >5:
         screen.blit(Claudio,(Cla_x,Cla_y))
         Cla_x+=Cla_speed*Cla_Xdir
@@ -184,13 +188,8 @@ while running:
             B_speed+= B_accell
     Bolognesi=game.transform.smoothscale(Bolognesi,(B_size,B_size))
 
-    #defining player center
-    center = centro(x,y,size)
-    #defining Bolognesi center
-    center_B= centro(B_x,B_y,B_size)
-
     #getting hit
-    if  hit(center,center_B,size, B_size) == True:
+    if  hit(x,B_x,y,B_y,size, B_size) == True or hit(x,Cla_x,y, Cla_y,size,Cla_size) == True:
         size = size/2
         B_y = ylim +1000
 
@@ -209,7 +208,7 @@ while running:
     
 
 #end game routine
-background=game.image.load('.\\death_screen.jpg')
+background=game.image.load('death_screen.jpg')
 background=game.transform.smoothscale(background,(xlim,ylim))
 screen.blit(background,(0,0))
 text_color = (255, 255, 255)
