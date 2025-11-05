@@ -15,13 +15,13 @@ score=0
 #evento jumpscare
 jumpscare=game.image.load('C:\\Users\\Dell\\Desktop\\programmi python\\bolo escape\\bolo_jumpscare.jpg')
 jumpscare=game.transform.smoothscale(jumpscare,(xlim,ylim))
-event_jumpscare= np.random.randint(2,5)
+event_jumpscare= np.random.randint(5,10)
 #info giocatore
 size = 50
 x=xlim/2 - size/2
 y=ylim/2 - size/2
 size = 50
-speed= 15
+speed= 20
 
 #un nemico dovrebbe avere una size, delle coordinate a lui associate e un'immagine ben definita
 
@@ -57,7 +57,7 @@ while running:
         screen.blit(jumpscare,(0,0))
         game.display.update()
         time.sleep(.5)
-        event_jumpscare+=score + np.random.randint(5,10)
+        event_jumpscare+=np.random.randint(5,15)
         score+=1
 
 
