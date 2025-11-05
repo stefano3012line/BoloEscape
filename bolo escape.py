@@ -1,29 +1,29 @@
 import pygame as game
 import numpy as np
 import time
+
 #inizializzazione gioco
 game.init()
 running = True
-xlim=1280
-ylim=720
+#dimensioni schermo
+xlim,ylim=1280,720
 screen = game.display.set_mode((xlim,ylim))
 clock = game.time.Clock()
-background=game.image.load('C:\\Users\\Dell\\Desktop\\programmi python\\bolo escape\\unipipi.jpeg')
+background=game.image.load('.\\unipipi.jpeg')
 background=game.transform.smoothscale(background,(xlim,ylim))
 score=0
 
 #evento jumpscare
-jumpscare=game.image.load('C:\\Users\\Dell\\Desktop\\programmi python\\bolo escape\\bolo_jumpscare.jpg')
+jumpscare=game.image.load('.\\bolo_jumpscare.jpg')
 jumpscare=game.transform.smoothscale(jumpscare,(xlim,ylim))
 event_jumpscare= np.random.randint(5,10)
+
 #info giocatore
 size = 50
 x=xlim/2 - size/2
 y=ylim/2 - size/2
 size = 50
 speed= 20
-
-#questa è una modifica
 
 #un nemico dovrebbe avere una size, delle coordinate a lui associate e un'immagine ben definita
 
@@ -34,7 +34,7 @@ B_y= - 2*B_size
 B_dir= 1
 B_speed=200
 B_accell=B_speed/5
-Bolognesi=game.image.load("C:\\Users\\Dell\\Desktop\\programmi python\\bolo escape\\bolognesi.jpeg")
+Bolognesi=game.image.load(".\\bolognesi.jpeg")
 Bolognesi=game.transform.smoothscale(Bolognesi,(B_size,B_size))
 
 
@@ -58,7 +58,7 @@ while running:
     if event_jumpscare == score:
         screen.blit(jumpscare,(0,0))
         game.display.update()
-        time.sleep(.5)
+        time.sleep(0.3)
         event_jumpscare+=np.random.randint(5,15)
         score+=1
 
@@ -79,7 +79,7 @@ while running:
     #player character
     #game.draw.circle(screen,'black',(x,y),size)
 
-    Player=game.image.load("C:\\Users\\Dell\\Desktop\\programmi python\\bolo escape\\player.png")
+    Player=game.image.load(".\\player.png")
     Player=game.transform.smoothscale(Player,(size,size))
     screen.blit(Player,(x,y))
 
@@ -175,7 +175,7 @@ while running:
 
 
 #end game routine
-background=game.image.load('C:\\Users\\Dell\\Desktop\\programmi python\\bolo escape\\death_screen.jpg')
+background=game.image.load('.\\death_screen.jpg')
 background=game.transform.smoothscale(background,(xlim,ylim))
 screen.blit(background,(0,0))
 text_color = (255, 255, 255)
