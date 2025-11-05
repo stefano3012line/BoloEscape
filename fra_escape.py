@@ -2,6 +2,19 @@ import pygame as game
 import numpy as np
 import time
 
+
+#funzione che trova i centri dei personaggi
+def centro(x,y,size):
+    cx = x + size/2
+    cy = y + size/2
+    return cx,cy
+#funzione che calcola se sei colpito o meno
+def hit(c1,c2,s1,s2):
+    
+    if  np.abs(c1[0]-c2[0]) <= (s1+s2)/2 and np.abs(c1[1]-c2[1]) <= (s1+s2)/2:
+        return True
+    else:
+        return False
 #inizializzazione gioco
 game.init()
 running = True
@@ -37,6 +50,16 @@ B_accell=B_speed/5
 Bolognesi=game.image.load("bolognesi.jpeg")
 Bolognesi=game.transform.smoothscale(Bolognesi,(B_size,B_size))
 
+#roba per fare bonati
+Cla_size=70
+Cla_speed=5
+Cla_x=0
+Cla_y=0
+Claudio=game.image.load("bonati_Claudio-Bonati.jpg")
+Claudio=game.transform.smoothscale(Claudio,(Cla_size,Cla_size))
+#array posizioni del players
+last_5_Xposition = np.array([])
+last_5_Yposition = np.array([])
 
 
 
@@ -53,6 +76,9 @@ while running:
 
     #game speed
     clock.tick(60)
+
+
+        
 
     #game event jumpscare
     if event_jumpscare == score:
@@ -73,13 +99,25 @@ while running:
     if  game.key.get_pressed()[game.K_a] and x >= speed:
         x-=speed
 
-
+    #claudio movement
+    last_5_Xposition=np.append(last_5_Xposition,x)
+    last_5_Yposition=np.append(last_5_Yposition,y)
+    if len(last_5_Xposition) > 24:
+        last_5_Xposition=last_5_Xposition[1:]
+        last_5_Yposition=last_5_Yposition[1:]
+        #print(last_5_Xposition)
+    Cla_Xdir= np.sign(-Cla_x + last_5_Xposition[-1])
+    Cla_Ydir= np.sign(- Cla_y +last_5_Yposition[-1])
+    if score >5:
+        screen.blit(Claudio,(Cla_x,Cla_y))
+        Cla_x+=Cla_speed*Cla_Xdir
+        Cla_y+=Cla_speed*Cla_Ydir
 
 
     #player character
     #game.draw.circle(screen,'black',(x,y),size)
 
-    Player=game.image.load("aplayer.png")
+    Player=game.image.load("player.png")
     Player=game.transform.smoothscale(Player,(size,size))
     screen.blit(Player,(x,y))
 
@@ -146,17 +184,13 @@ while running:
             B_speed+= B_accell
     Bolognesi=game.transform.smoothscale(Bolognesi,(B_size,B_size))
 
-
     #defining player center
-    center_x= x + size/2
-    center_y= y + size/2
-
+    center = centro(x,y,size)
     #defining Bolognesi center
-    center_B_y = B_y + B_size/2
-    center_B_x = B_x + B_size/2
+    center_B= centro(B_x,B_y,B_size)
 
     #getting hit
-    if  np.abs(center_x-center_B_x) <= (size+B_size)/2 and np.abs(center_y-center_B_y) <= (size+B_size)/2 :
+    if  hit(center,center_B,size, B_size) == True:
         size = size/2
         B_y = ylim +1000
 
@@ -172,7 +206,7 @@ while running:
     screen.blit(score_text, (20, 20))  # posizione (x=20, y=20)
 
     game.display.update()
-
+    
 
 #end game routine
 background=game.image.load('.\\death_screen.jpg')
