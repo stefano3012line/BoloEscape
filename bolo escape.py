@@ -23,6 +23,8 @@ y=ylim/2 - size/2
 size = 50
 speed= 20
 
+#questa è una modifica
+
 #un nemico dovrebbe avere una size, delle coordinate a lui associate e un'immagine ben definita
 
 #info bolognesi
