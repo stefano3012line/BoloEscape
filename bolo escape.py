@@ -12,6 +12,10 @@ background=game.image.load('C:\\Users\\Dell\\Desktop\\programmi python\\bolo esc
 background=game.transform.smoothscale(background,(xlim,ylim))
 score=0
 
+#evento jumpscare
+jumpscare=game.image.load('C:\\Users\\Dell\\Desktop\\programmi python\\bolo escape\\bolo_jumpscare.jpg')
+jumpscare=game.transform.smoothscale(jumpscare,(xlim,ylim))
+event_jumpscare= np.random.randint(2,5)
 #info giocatore
 size = 50
 x=xlim/2 - size/2
@@ -44,9 +48,17 @@ while running:
     screen.blit(background,(0,0))
 
 
+
     #game speed
     clock.tick(60)
 
+    #game event jumpscare
+    if event_jumpscare == score:
+        screen.blit(jumpscare,(0,0))
+        game.display.update()
+        time.sleep(.5)
+        event_jumpscare+=score + np.random.randint(5,10)
+        score+=1
 
 
     #player movement
@@ -170,7 +182,7 @@ score_text = font.render(f"Score: {score}", True, text_color)
 screen.blit(score_text, (300, 480))
 
 game.display.update()
-time.sleep(3)
+time.sleep(5)
 game.quit()
 
 
