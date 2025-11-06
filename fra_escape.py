@@ -105,7 +105,7 @@ while running:
     clock.tick(60)
 
 
-        
+#andrea devi esplodereeeeee
 
     #game event jumpscare
     if event_jumpscare == score:
