@@ -117,7 +117,7 @@ while running:
     if B_y< -(2*B_size) or B_y>ylim+(B_size*2) or B_x< -(2*B_size) or B_x>xlim+(B_size*2) :
         B_dir = np.random.randint(0,4)
         B_size = np.random.randint(10,500)
-        B_accell=int((B_speed/(3.5*score+1)))+1
+        B_accell=int((B_speed/(2.5*score+1)))+1
         score+=1
         print(score,B_speed)
 
