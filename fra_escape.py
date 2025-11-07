@@ -9,7 +9,7 @@ def centro(x,y,size):
     cy = y + size/2
     return cx,cy
 #funzione che calcola se sei colpito o meno
-def overlap(c1,c2,s1,s2):
+'''def overlap(c1,c2,s1,s2):
     
     if  np.abs(c1[0]-c2[0]) <= (s1+s2)/2 and np.abs(c1[1]-c2[1]) <= (s1+s2)/2:
         return True
@@ -19,8 +19,32 @@ def overlap(c1,c2,s1,s2):
 def hit(x1,x2,y1,y2,size1,size2):
     c1 = centro(x1,y1,size1)
     c2 = centro(x2,y2,size2)
-    return overlap(c1,c2,size1,size2)
+    return overlap(c1,c2,size1,size2)'''
 
+def hit(obj1,obj2):
+    if np.abs(obj1.x +obj1.size/2 - obj2.x +obj2.size/2) <= (obj1.size +obj2.size)/2 and np.abs(obj1.y- obj2.y +obj1.size/2 + obj2.size/2) <= (obj1.size +obj2.size)/2:
+        return True
+    else :
+        return False
+#definizione della classe dei nemici semplici e player
+
+class character:
+    def __init__(self, image, size , speed, x, y):
+        # Instance variables
+        self.image = game.transform.smoothscale(game.image.load(image), (size,size))
+        self.size = size
+        self.speed = speed
+        self.x = x
+        self.y = y
+        self.centre = centro(x,y,size)
+    def updatecentre(self,x,y):
+        self.centre = centro(x,y,self.size)
+        return
+class bolognesi(character):
+    def __init__(self, image, size , speed, x, y,dir):
+        super().__init__(image,size,speed,x,y)
+        self.dir= dir
+        self.accel = speed/5
 #inizializzazione gioco
 game.init()
 running = True
@@ -37,32 +61,31 @@ jumpscare=game.image.load('bolo_jumpscare.jpg')
 jumpscare=game.transform.smoothscale(jumpscare,(xlim,ylim))
 event_jumpscare= np.random.randint(5,10)
 
-#info giocatore
-size = 50
-x=xlim/2 - size/2
-y=ylim/2 - size/2
-size = 50
-speed= 20
-
+#oggetto player
+player = character("player.png",50,20,xlim/2 - 25, ylim/2 - 25)
+#oggetto bolognesi
+Bolognesi = bolognesi("bolognesi.jpeg",200,200,np.random.randint(200,xlim-200),400,1)
+#oggetto bonati
+Claudio = character("bonati_Claudio-Bonati.jpg",70,5,0,0)
 #un nemico dovrebbe avere una size, delle coordinate a lui associate e un'immagine ben definita
 
 #info bolognesi
-B_size=200
-B_x= np.random.randint(B_size,xlim-B_size)
-B_y= - 2*B_size
-B_dir= 1
-B_speed=200
-B_accell=B_speed/5
-Bolognesi=game.image.load("bolognesi.jpeg")
-Bolognesi=game.transform.smoothscale(Bolognesi,(B_size,B_size))
+#B_size =200
+#B_x= np.random.randint(B_size,xlim-B_size)
+#B_y= - 2*B_size
+#B_dir= 1
+#B_speed=200
+#B_accell=B_speed/5
+#Bolognesi=game.image.load("bolognesi.jpeg")
+#Bolognesi=game.transform.smoothscale(Bolognesi,(B_size,B_size))
 
 #roba per fare bonati
-Cla_size=70
-Cla_speed=5
-Cla_x=0
-Cla_y=0
-Claudio=game.image.load("bonati_Claudio-Bonati.jpg")
-Claudio=game.transform.smoothscale(Claudio,(Cla_size,Cla_size))
+#Cla_size=70
+#Cla_speed=5
+#Cla_x=0
+#Cla_y=0
+#Claudio=game.image.load("bonati_Claudio-Bonati.jpg")
+#Claudio=game.transform.smoothscale(Claudio,(Cla_size,Cla_size))
 #array posizioni del players
 last_n_Xposition = np.array([])
 last_n_Yposition = np.array([])
@@ -82,7 +105,7 @@ while running:
     clock.tick(60)
 
 
-        
+#andrea devi esplodereeeeee
 
     #game event jumpscare
     if event_jumpscare == score:
@@ -92,108 +115,104 @@ while running:
         event_jumpscare+=np.random.randint(5,15)
         score+=1
 
-
     #player movement
-    if  game.key.get_pressed()[game.K_s]and y <= ylim - (size+speed):
-        y+=speed
-    if  game.key.get_pressed()[game.K_w]and y >= speed:
-        y-=speed
-    if  game.key.get_pressed()[game.K_d] and x <= xlim -(size+speed):
-        x+=speed
-    if  game.key.get_pressed()[game.K_a] and x >= speed:
-        x-=speed
+    if  game.key.get_pressed()[game.K_s]and player.y <= ylim - (player.size+player.speed):
+        player.y+=player.speed
+    if  game.key.get_pressed()[game.K_w]and player.y >= player.speed:
+        player.y-=player.speed
+    if  game.key.get_pressed()[game.K_d] and player.x <= xlim -(player.size+player.speed):
+        player.x+=player.speed
+    if  game.key.get_pressed()[game.K_a] and player.x >= player.speed:
+        player.x-=player.speed
+
 
     #claudio movement
-    last_n_Xposition=np.append(last_n_Xposition,x)
-    last_n_Yposition=np.append(last_n_Yposition,y)
+    last_n_Xposition=np.append(last_n_Xposition,player.x)
+    last_n_Yposition=np.append(last_n_Yposition,player.y)
     if len(last_n_Xposition) > 24:
         last_n_Xposition=last_n_Xposition[1:]
         last_n_Yposition=last_n_Yposition[1:]
         #print(last_n_Xposition)
-    Cla_Xdir= np.sign(-Cla_x + last_n_Xposition[-1])
-    Cla_Ydir= np.sign(- Cla_y +last_n_Yposition[-1])
+    Cla_Xdir= np.sign(-Claudio.x + last_n_Xposition[-1])
+    Cla_Ydir= np.sign(-Claudio.y + last_n_Yposition[-1])
     if score >5:
-        screen.blit(Claudio,(Cla_x,Cla_y))
-        Cla_x+=Cla_speed*Cla_Xdir
-        Cla_y+=Cla_speed*Cla_Ydir
+        screen.blit(Claudio.image,(Claudio.x,Claudio.y))
+        Claudio.x+=Claudio.speed*Cla_Xdir
+        Claudio.y+=Claudio.speed*Cla_Ydir
 
 
     #player character
     #game.draw.circle(screen,'black',(x,y),size)
 
-    Player=game.image.load("player.png")
-    Player=game.transform.smoothscale(Player,(size,size))
-    screen.blit(Player,(x,y))
-
-
+    screen.blit(player.image,(player.x,player.y))
 
 
 
     #Bolognesi movement
-    if B_dir == 0:#from north
-        if B_y>= -(2*B_size) and B_y<=ylim+(B_size*2):
-            screen.blit(Bolognesi,(B_x,B_y))
-            B_y+=B_speed/(5*np.sqrt(B_size))
+    if Bolognesi.dir == 0:#from north
+        if Bolognesi.y>= -(2*Bolognesi.size) and Bolognesi.y<=ylim+(Bolognesi.size*2):
+            screen.blit(Bolognesi.image,(Bolognesi.x,Bolognesi.y))
+            Bolognesi.y+=Bolognesi.speed/(5*np.sqrt(Bolognesi.size))
 
 
-    elif B_dir == 1:#from south
-        if B_y>= -(2*B_size) and B_y<=ylim+(B_size*2):
-            screen.blit(Bolognesi,(B_x,B_y))
-            B_y -= B_speed/(5*np.sqrt(B_size))
+    elif Bolognesi.dir == 1:#from south
+        if Bolognesi.y>= -(2*Bolognesi.size) and Bolognesi.y<=ylim+(Bolognesi.size*2):
+            screen.blit(Bolognesi.image,(Bolognesi.x,Bolognesi.y))
+            Bolognesi.y -= Bolognesi.speed/(5*np.sqrt(Bolognesi.size))
 
 
-    elif B_dir == 2:#from est
-        if B_x>= -(2*B_size) and B_x<=xlim+(2*B_size):
-            screen.blit(Bolognesi,(B_x,B_y))
-            B_x -= B_speed/(5*np.sqrt(B_size))
+    elif Bolognesi.dir == 2:#from est
+        if Bolognesi.x>= -(2*Bolognesi.size) and Bolognesi.x<=xlim+(2*Bolognesi.size):
+            screen.blit(Bolognesi.image,(Bolognesi.x,Bolognesi.y))
+            Bolognesi.x -= Bolognesi.speed/(5*np.sqrt(Bolognesi.size))
 
 
 
-    elif B_dir == 3:#from west
-        if B_x>= -(2*B_size) and B_x<=xlim+(2*B_size):
-            screen.blit(Bolognesi,(B_x,B_y))
-            B_x += B_speed/(5*np.sqrt(B_size))
+    elif Bolognesi.dir == 3:#from west
+        if Bolognesi.x>= -(2*Bolognesi.size) and Bolognesi.x<=xlim+(2*Bolognesi.size):
+            screen.blit(Bolognesi.image,(Bolognesi.x,Bolognesi.y))
+            Bolognesi.x += Bolognesi.speed/(5*np.sqrt(Bolognesi.size))
 
 
         #giving random dir
-    if B_y< -(2*B_size) or B_y>ylim+(B_size*2) or B_x< -(2*B_size) or B_x>xlim+(B_size*2) :
-        B_dir = np.random.randint(0,4)
-        B_size = np.random.randint(10,500)
-        B_accell=int((B_speed/(3.5*score+1)))+1
+    if Bolognesi.y< -(2*Bolognesi.size) or Bolognesi.y>ylim+(Bolognesi.size*2) or Bolognesi.x< -(2*Bolognesi.size) or Bolognesi.x>xlim+(Bolognesi.size*2) :
+        Bolognesi.dir = np.random.randint(0,4)
+        Bolognesi.size = np.random.randint(10,500)
+        Bolognesi.accel=int((Bolognesi.speed/(3.5*score+1)))+1
         score+=1
-        print(score,B_speed)
+        print(score,Bolognesi.speed)
 
 
 
 #spawn for different directions size and speed
-        if B_dir == 0:#from north
+        if Bolognesi.dir == 0:#from north
            # B_size=np.random.randint(size,3*size)
-            B_x= np.random.randint(0,xlim-B_size)
-            B_y= -(2*B_size)
-            B_speed+= B_accell
-        elif B_dir == 2:#from est
+            Bolognesi.x= np.random.randint(0,xlim-Bolognesi.size)
+            Bolognesi.y= -(2*Bolognesi.size)
+            Bolognesi.speed+= Bolognesi.accel
+        elif Bolognesi.dir == 2:#from est
            # B_size=np.random.randint(size,3*size)
-            B_y= np.random.randint(0,ylim-B_size)
-            B_x= xlim+(2*B_size)
-            B_speed+= B_accell
-        elif B_dir == 1:#from south
+            Bolognesi.y= np.random.randint(0,ylim-Bolognesi.size)
+            Bolognesi.x= xlim+(2*Bolognesi.size)
+            Bolognesi.speed+= Bolognesi.accel
+        elif Bolognesi.dir == 1:#from south
            # B_size=np.random.randint(size,3*size)
-            B_x= np.random.randint(0,xlim-B_size)
-            B_y= ylim +(2*B_size)
-            B_speed+= B_accell
-        elif B_dir == 3:#from west
+            Bolognesi.x= np.random.randint(0,xlim-Bolognesi.size)
+            Bolognesi.y= ylim +(2*Bolognesi.size)
+            Bolognesi.speed+= Bolognesi.accel
+        elif Bolognesi.dir == 3:#from west
            # B_size=np.random.randint(size,3*size)
-            B_y= np.random.randint(0,ylim-B_size)
-            B_x= -(2*B_size)
-            B_speed+= B_accell
-    Bolognesi=game.transform.smoothscale(Bolognesi,(B_size,B_size))
+            Bolognesi.y= np.random.randint(0,ylim-Bolognesi.size)
+            Bolognesi.x= -(2*Bolognesi.size)
+            Bolognesi.speed+= Bolognesi.accel
+    #Bolognesi=game.transform.smoothscale(Bolognesi,(Bolognesi.size,Bolognesi.size)) 
 
     #getting hit
-    if  hit(x,B_x,y,B_y,size, B_size) == True or hit(x,Cla_x,y, Cla_y,size,Cla_size) == True:
-        size = size/2
-        B_y = ylim +1000
+    if  hit(player, Bolognesi) == True or hit(player, Claudio) == True:
+        player.size = player.size/2
+        Bolognesi.y = ylim +1000
 
-    if size <= 20 or size>=100:
+    if player.size <= 20 or player.size>=100:
         running=False
 
     # Font per il punteggio
