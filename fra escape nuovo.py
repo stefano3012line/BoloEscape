@@ -2,32 +2,6 @@ import pygame as game
 import numpy as np
 import time
 
-#funzione che calcola se sei colpito o meno
-'''def overlap(c1,c2,s1,s2):
-    
-    if  np.abs(c1[0]-c2[0]) <= (s1+s2)/2 and np.abs(c1[1]-c2[1]) <= (s1+s2)/2:
-        return True
-    else:
-        return False
-
-def hit(x1,x2,y1,y2,size1,size2):
-    c1 = centro(x1,y1,size1)
-    c2 = centro(x2,y2,size2)
-    return overlap(c1,c2,size1,size2)
-
-def hit(obj1,obj2):
-    if np.abs(obj1.x +obj1.size/2 - obj2.x +obj2.size/2) <= (obj1.size +obj2.size)/2 and np.abs(obj1.y- obj2.y +obj1.size/2 + obj2.size/2) <= (obj1.size +obj2.size)/2:
-        return True
-    else :
-        return False'''
-
-def hit(obj1, obj2):
-    overlap = np.abs(obj1.centre - obj2.centre) - (obj1.size + obj2.size)/2
-    
-    if overlap[0]<=0 and overlap[1]<=0 and obj1.hp>0 and obj2.hp>0:
-        obj1.hp -= 1 
-        obj2.hp -= 1
-
 #dimensioni schermo
 xlim,ylim=1280,720
 screen = game.display.set_mode((xlim,ylim))
@@ -36,38 +10,40 @@ background=game.image.load('unipipi.jpeg')
 background=game.transform.smoothscale(background,(xlim,ylim))
 score=-1/60
 
+#funzione che calcola se sei colpito o meno 
+def hit(obj1, obj2):
+    overlap = np.abs(obj1.centre - obj2.centre) - (obj1.size + obj2.size)/2
+    
+    if overlap[0]<=0 and overlap[1]<=0 and obj1.hp>0 and obj2.hp>0:
+        obj1.hp -=1
+        obj2.hp -=1
+
 #definizione della classe dei nemici semplici e player
-#porca puttana andrea vaffanculo cerchiamo di farlo bene sta volta
+#personaggio definito come: immagine,taglia,velocità, hitpoints, vettore posizione,vettore direzione in questo ordine
 
-#qualsiasi personaggio avràun immagine una taglia una velocità un vetore posizione e un vettore direzione
-#attenzione 
-
-#dare posizione e direzioni come tuple
 class Character:
     def __init__(self, image, size, speed,hp, position, direction):
         # Load and scale the image
         self.image = game.transform.smoothscale(game.image.load(image), (size, size))
-        
         # Instance variables
         self.hp = hp
         self.size = size
         self.speed = speed
-        self.position = np.array(position, dtype=float)   # [x, y]
-        self.direction = np.array(direction, dtype=float) # [dx, dy]
+        self.position = np.array(position, dtype=float)
+        self.direction = np.array(direction, dtype=float)
     @property   
     def centre(self):
-        #Return the center point of the character.
+        #Return the center point of the character
         return self.position + np.array([self.size / 2, self.size / 2])
-
     def update_position(self):
         #Move the character based on direction and speed
         if self.hp> 0:
             self.position += self.direction * self.speed
-
     def draw(self):
         #Draw the character on the given screen.
         if self.hp >0:
             screen.blit(self.image, self.position)
+#i metodi delle classi sono 
 #definizioni degli oggetti per quale motivo questo era sotto l'inzializzazione del gioco un po' di ordine Andrea che cazzo
 
 #oggetto player
