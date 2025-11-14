@@ -14,7 +14,7 @@ score=-1/60
 def hit(obj1, obj2):
     overlap = np.abs(obj1.centre - obj2.centre) - (obj1.size + obj2.size)/2
     
-    if overlap[0]<=0 and overlap[1]<=0:
+    if overlap[0]<=0 and overlap[1]<=0 and obj1.hp >0 and obj2.hp >0:
         obj1.hp -=1
         obj2.hp -=1
 
@@ -97,20 +97,24 @@ class Stefano(Character):
 #definizioni degli oggetti per quale motivo questo era sotto l'inzializzazione del gioco un po' di ordine Andrea che cazzo
 
 #oggetto player
-player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
+player = Character("player.png",50,20,5,[xlim/2 - 25, ylim/2 - 25], [0,0])
 
 #oggetto bolognesi
 Bolognesi = Stefano("bolognesi.jpeg",200,600,0,[0,0],[0,0],0)
 
 #oggetto bonati
 Bonati = Character("bonati_Claudio-Bonati.jpg",70,10,0,[0,0],[0,0])
+Bonati_spawn_value=np.random.randint(5,15)
 #un nemico dovrebbe avere una size, delle coordinate a lui associate e un'immagine ben definita
 
 #######################################################################################################################################
 
 #immaginie e size cuori
 heart_size = 60
-life = [game.transform.smoothscale(game.image.load("1hp-Photoroom.png"),(3*heart_size,heart_size)),game.transform.smoothscale(game.image.load("2hp-Photoroom.png"),(3*heart_size,heart_size)),game.transform.smoothscale(game.image.load("3hp-Photoroom.png"),(3*heart_size,heart_size))]
+heart = game.transform.smoothscale(game.image.load("heart.png"),(heart_size,heart_size))
+
+
+#life = [game.transform.smoothscale(game.image.load("1hp-Photoroom.png"),(3*heart_size,heart_size)),game.transform.smoothscale(game.image.load("2hp-Photoroom.png"),(3*heart_size,heart_size)),game.transform.smoothscale(game.image.load("3hp-Photoroom.png"),(3*heart_size,heart_size))]
 
 #evento jumpscare
 jumpscare=game.image.load('bolo_jumpscare.jpg')
@@ -136,17 +140,6 @@ while running:
 
     #game speed
     clock.tick(30)
-
-    #blit degli hp
-    #####################################################
-    if player.hp ==3:
-        screen.blit(life[2],(xlim -3*heart_size -5,10))
-    elif player.hp ==2:
-        screen.blit(life[1],(xlim -3*heart_size -5,10))
-    elif player.hp ==1:
-        screen.blit(life[0],(xlim -3*heart_size -5,10))
-    #####################################################
-
     
     #game event jumpscare
     if event_jumpscare == score:
@@ -188,15 +181,15 @@ while running:
     #####################################################################################################################
     #aggiungo claudio bonati
     #if int score è solo un proof of concept poi tocca fare una cosa seria per ora bonati spawna quando lo score è divisibile per 17 e despowna quando viene colpito
-    if int(score) % 17 == 0:
+    if int(score) == Bonati_spawn_value:
         Bonati.hp = 1
+        Bonati_spawn_value+= np.random.randint(10,20)
     
     Bonati.draw()
     Bonati.direction = (last_n_position[0] - Bonati.position)/np.linalg.norm(last_n_position[0] - Bonati.position)
     Bonati.update_position()
     # checko l'hit con bonati
-    if Bonati.hp ==1:
-        hit(Bonati,player)
+    hit(Bonati,player)
     #print(player.hp)
     #print(Bonati.direction)
     #####################################################################################################################
@@ -241,21 +234,27 @@ while running:
     # draw
     Bolognesi.draw()
     #checking hit
-    if Bolognesi.hp > 0:
-        hit(Bolognesi, player)
+    hit(Bolognesi, player)
+    hit(Bolognesi, Bonati)
 
     ################################################################################################################################
 
     if player.hp == 0:
         running=False
-
-    # Font per il punteggio
+    ################################################################################################################################
+    #informazioni testo
     font = game.font.SysFont('Monocraft', 40)
     text_color = (0, 0, 0)
 
-    # Mostra il punteggio a schermo
+    #blit dello score
     score_text = font.render(f"Score: {int(score)}", True, text_color)
     screen.blit(score_text, (20, 20))  # posizione (x=20, y=20)
+
+    #blit degli hp
+    for i in range(1,player.hp+1):
+        screen.blit(heart,(xlim - i*heart_size -5,10))
+    ################################################################################################################################
+
 
     game.display.update()
     
