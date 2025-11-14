@@ -73,16 +73,17 @@ class Stefano(Character):
         return self.position + np.array([self.size / 2, self.size / 2])
     def update_position(self):
         #Move the character based on direction and speed
-        if self.spawn == 0:
+        if self.spawn == 0: #north
             self.direction = np.array([0, 1], dtype=float)
-        elif self.spawn == 1:
+        elif self.spawn == 1: #south
             self.direction = np.array([0, -1], dtype=float)
-        elif self.spawn == 2:
+        elif self.spawn == 2: #east
             self.direction = np.array([-1, 0], dtype=float)
-        elif self.spawn == 3:
+        elif self.spawn == 3: #west
             self.direction = np.array([1, 0], dtype=float)
         self.position += self.direction * self.speed/(5*np.sqrt(Bolognesi.size))
     def accelerate(self):
+        #accellera bolognesi ogni volta che esce dallo schermo
         self.speed += int((Bolognesi.speed/(2.5*score+1)))+1
     def draw(self):
         #Draw the character on the given screen.
@@ -99,10 +100,7 @@ class Stefano(Character):
 player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
 
 #oggetto bolognesi
-Bolognesi = Stefano("bolognesi.jpeg",200,600,0,[np.random.randint(200,xlim-200),400],[0,0],0)
-#Bolognesi.hp=1
-#Bolognesi_dir= 1
-
+Bolognesi = Stefano("bolognesi.jpeg",200,600,0,[0,0],[0,0],0)
 #oggetto bonati
 Bonati = Character("bonati_Claudio-Bonati.jpg",70,10,0,[0,0],[0,0])
 #un nemico dovrebbe avere una size, delle coordinate a lui associate e un'immagine ben definita
@@ -225,20 +223,16 @@ while running:
         Bolognesi.hp = 1
 
     # set initial spawn position
-        if Bolognesi.spawn == 0:  # north
+        if Bolognesi.spawn == 0:  #north
             Bolognesi.position = np.array([np.random.randint(0, xlim-Bolognesi.size), -Bolognesi.size], dtype=float)
-        elif Bolognesi.spawn == 1: # south
+        elif Bolognesi.spawn == 1: #south
             Bolognesi.position = np.array([np.random.randint(0, xlim-Bolognesi.size), ylim + Bolognesi.size], dtype=float)
-        elif Bolognesi.spawn == 2: # east
+        elif Bolognesi.spawn == 2: #east
             Bolognesi.position = np.array([xlim + Bolognesi.size,np.random.randint(0, ylim-Bolognesi.size)], dtype=float)
-        elif Bolognesi.spawn == 3: # west
+        elif Bolognesi.spawn == 3: #west
             Bolognesi.position = np.array([-Bolognesi.size,np.random.randint(0, ylim-Bolognesi.size)], dtype=float)
-    '''
-    print(
-    "Spawn =", Bolognesi.spawn,
-    "| Direction =", Bolognesi.direction,
-    "| Pos =", Bolognesi.position,
-    "| Size =", Bolognesi.size)'''
+
+    #print("Spawn =", Bolognesi.spawn,"| Direction =", Bolognesi.direction,"| Pos =", Bolognesi.position,"| Size =", Bolognesi.size "|speed =" Bolognesi.speed)
 
     # move Bolognesi
     Bolognesi.update_position()
