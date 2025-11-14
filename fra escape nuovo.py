@@ -101,6 +101,7 @@ player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
 
 #oggetto bolognesi
 Bolognesi = Stefano("bolognesi.jpeg",200,600,0,[0,0],[0,0],0)
+
 #oggetto bonati
 Bonati = Character("bonati_Claudio-Bonati.jpg",70,10,0,[0,0],[0,0])
 #un nemico dovrebbe avere una size, delle coordinate a lui associate e un'immagine ben definita
@@ -239,7 +240,7 @@ while running:
 
     # draw
     Bolognesi.draw()
-
+    #checking hit
     if Bolognesi.hp > 0:
         hit(Bolognesi, player)
 
@@ -249,7 +250,7 @@ while running:
         running=False
 
     # Font per il punteggio
-    font = game.font.SysFont('Arial', 40)
+    font = game.font.SysFont('Monocraft', 40)
     text_color = (0, 0, 0)
 
     # Mostra il punteggio a schermo
