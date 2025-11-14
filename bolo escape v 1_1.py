@@ -8,7 +8,7 @@ screen = game.display.set_mode((xlim,ylim))
 clock = game.time.Clock()
 background=game.image.load('unipipi.jpeg')
 background=game.transform.smoothscale(background,(xlim,ylim))
-score=-1/60
+score=0
 
 #funzione che calcola se sei colpito o meno 
 def hit(obj1, obj2):
@@ -24,13 +24,24 @@ def hit(obj1, obj2):
 class Character:
     def __init__(self, image, size, speed,hp, position, direction):
         # Load and scale the image
-        self.image = game.transform.smoothscale(game.image.load(image), (size, size))
         # Instance variables
         self.hp = hp
-        self.size = size
+        self._size = size
         self.speed = speed
         self.position = np.array(position, dtype=float)
         self.direction = np.array(direction, dtype=float)
+        self.image = game.transform.smoothscale(game.image.load(image), (self.size, self.size))
+
+    @property
+    def size(self):
+        return self._size
+    
+    @size.setter
+    def size(self, new):
+        self._size = new
+        self.image = game.transform.smoothscale(self.image, (new, new))
+
+
     @property   
     def centre(self):
         #Return the center point of the character
@@ -49,7 +60,10 @@ class Character:
 #oggetto player
 player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
 #oggetto bolognesi
-#Bolognesi = Character("bolognesi.jpeg",200,200,[np.random.randint(200,xlim-200),400],[0,0])
+
+Bolognesi = Character("bolognesi.jpeg",200,600,0,[np.random.randint(200,xlim-200),400],[0,0])
+Bolognesi.hp=1
+Bolognesi_dir= 1
 #oggetto bonati
 Bonati_spawn_value=np.random.randint(5,15)
 Bonati = Character("bonati_Claudio-Bonati.jpg",70,10,0,[0,0],[0,0])
@@ -70,7 +84,7 @@ last_n_position = []
 game.init()
 running = True
 while running:
-    score += 1/60
+    
     for event in game.event.get():
         if event.type == game.QUIT:
             running = False
@@ -141,6 +155,77 @@ while running:
     #print(Bonati.direction)
     #####################################################################################################################
 
+    #####################################################################################################################
+
+    #####################################################################################################################
+
+                                                  #BOLOGNESI#
+
+    #####################################################################################################################
+    #aggiungo stefano bolognesi
+
+    
+    
+    
+    #Bolognesi movement
+    if Bolognesi_dir == 0:#from north
+        if Bolognesi.position[1]>= -(2*Bolognesi.size) and Bolognesi.position[1]<=ylim+(Bolognesi.size*2):
+            Bolognesi.draw()
+            Bolognesi.position[1]+=Bolognesi.speed/(5*np.sqrt(Bolognesi.size))
+
+
+    elif Bolognesi_dir == 1:#from south
+        if Bolognesi.position[1]>= -(2*Bolognesi.size) and Bolognesi.position[1]<=ylim+(Bolognesi.size*2):
+            Bolognesi.draw()
+            Bolognesi.position[1] -= Bolognesi.speed/(5*np.sqrt(Bolognesi.size))
+
+
+    elif Bolognesi_dir == 2:#from est
+        if Bolognesi.position[0]>= -(2*Bolognesi.size) and Bolognesi.position[0]<=xlim+(2*Bolognesi.size):
+            Bolognesi.draw()
+            Bolognesi.position[0] -= Bolognesi.speed/(5*np.sqrt(Bolognesi.size))
+
+
+
+    elif Bolognesi_dir == 3:#from west
+        if Bolognesi.position[0]>= -(2*Bolognesi.size) and Bolognesi.position[0]<=xlim+(2*Bolognesi.size):
+            Bolognesi.draw()
+            Bolognesi.position[0] += Bolognesi.speed/(5*np.sqrt(Bolognesi.size))
+
+
+        #giving random dir
+    if Bolognesi.position[1]< -(2*Bolognesi.size) or Bolognesi.position[1]>ylim+(Bolognesi.size*2) or Bolognesi.position[0]< -(2*Bolognesi.size) or Bolognesi.position[0]>xlim+(Bolognesi.size*2) :
+        Bolognesi_dir = np.random.randint(0,4)
+        Bolognesi.size = np.random.randint(10,500)
+        B_accell=int((Bolognesi.speed/(2.5*score+1)))+1
+        score+=1
+        
+
+
+
+#spawn for different directions size and speed
+        if Bolognesi_dir == 0:#from north
+           # Bolognesi.size=np.random.randint(size,3*size)
+            Bolognesi.position[0]= np.random.randint(0,xlim-Bolognesi.size)
+            Bolognesi.position[1]= -(2*Bolognesi.size)
+            Bolognesi.speed+= B_accell
+        elif Bolognesi_dir == 2:#from est
+           # Bolognesi.size=np.random.randint(size,3*size)
+            Bolognesi.position[1]= np.random.randint(0,ylim-Bolognesi.size)
+            Bolognesi.position[0]= xlim+(2*Bolognesi.size)
+            Bolognesi.speed+= B_accell
+        elif Bolognesi_dir == 1:#from south
+           # Bolognesi.size=np.random.randint(size,3*size)
+            Bolognesi.position[0]= np.random.randint(0,xlim-Bolognesi.size)
+            Bolognesi.position[1]= ylim +(2*Bolognesi.size)
+            Bolognesi.speed+= B_accell
+        elif Bolognesi_dir == 3:#from west
+           # Bolognesi.size=np.random.randint(size,3*size)
+            Bolognesi.position[1]= np.random.randint(0,ylim-Bolognesi.size)
+            Bolognesi.position[0]= -(2*Bolognesi.size)
+            Bolognesi.speed+= B_accell
+    
+
     if player.hp == 0:
         running=False
 
@@ -153,7 +238,11 @@ while running:
     screen.blit(score_text, (20, 20))  # posizione (x=20, y=20)
 
     game.display.update()
-    
+
+
+
+
+
 
 #end game routine
 background=game.image.load('death_screen.jpg')
