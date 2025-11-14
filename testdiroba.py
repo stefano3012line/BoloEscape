@@ -5,8 +5,10 @@ import time
 
 game.init()
 mixer.init()
-mixer.music.load('bolognesi-passing.mp3')
-mixer.music.play()
+Bolo_passing =mixer.Sound('bolognesi-passing.mp3')
 
-while game.mixer.music.get_busy(): 
-    game.time.Clock().tick(10)
+
+while True:
+    inpt = input('Press enter to play the sound: ')
+    Bolo_passing.play()  # Play the sound.
+    print('Playing sound')
