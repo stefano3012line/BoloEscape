@@ -23,14 +23,24 @@ def hit(obj1, obj2):
 
 class Character:
     def __init__(self, image, size, speed,hp, position, direction):
-        # Load and scale the image
-        self.image = game.transform.smoothscale(game.image.load(image), (size, size))
+
         # Instance variables
         self.hp = hp
-        self.size = size
+        self._size = size
         self.speed = speed
         self.position = np.array(position, dtype=float)
         self.direction = np.array(direction, dtype=float)
+        # Load and scale the image
+        self.image = game.transform.smoothscale(game.image.load(image), (self.size, self.size))
+    @property
+    def size(self):
+        return self._size
+    
+    @size.setter
+    def size(self, new):
+        self._size = new
+        self.image = game.transform.smoothscale(self.image, (new, new))
+    
     @property   
     def centre(self):
         #Return the center point of the character
@@ -44,6 +54,42 @@ class Character:
         if self.hp >0:
             screen.blit(self.image, self.position)
 
+
+class Stefano(Character):
+    def __init__(self, image, size, speed,hp, position, direction, spawn):
+        super().__init__(image,size,speed,hp,position,direction)
+        self.spawn = spawn
+    @property
+    def size(self):
+        return self._size
+    
+    @size.setter
+    def size(self, new):
+        self._size = new
+        self.image = game.transform.smoothscale(self.image, (new, new))
+    @property
+    def centre(self):
+        #Return the center point of the character
+        return self.position + np.array([self.size / 2, self.size / 2])
+    def update_position(self):
+        #Move the character based on direction and speed
+        if self.spawn == 0:
+            self.direction = np.array([0, 1], dtype=float)
+        elif self.spawn == 1:
+            self.direction = np.array([0, -1], dtype=float)
+        elif self.spawn == 2:
+            self.direction = np.array([-1, 0], dtype=float)
+        elif self.spawn == 3:
+            self.direction = np.array([1, 0], dtype=float)
+        self.position += self.direction * self.speed/(5*np.sqrt(Bolognesi.size))
+    def accelerate(self):
+        self.speed += int((Bolognesi.speed/(2.5*score+1)))+1
+    def draw(self):
+        #Draw the character on the given screen.
+        if self.hp >0:
+            screen.blit(self.image, self.position)
+    
+
 ########################################################################################################################################
 
 #i metodi delle classi sono 
@@ -51,7 +97,11 @@ class Character:
 
 #oggetto player
 player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
+
 #oggetto bolognesi
+Bolognesi = Stefano("bolognesi.jpeg",200,600,0,[np.random.randint(200,xlim-200),400],[0,0],0)
+#Bolognesi.hp=1
+#Bolognesi_dir= 1
 
 #oggetto bonati
 Bonati = Character("bonati_Claudio-Bonati.jpg",70,10,0,[0,0],[0,0])
@@ -91,7 +141,7 @@ while running:
     #blit degli hp
     #####################################################
     if player.hp ==3:
-        screen.blit(life[2],(xlim - 3*heart_size -5,10))
+        screen.blit(life[2],(xlim -3*heart_size -5,10))
     elif player.hp ==2:
         screen.blit(life[1],(xlim -3*heart_size -5,10))
     elif player.hp ==1:
@@ -148,9 +198,58 @@ while running:
     # checko l'hit con bonati
     if Bonati.hp ==1:
         hit(Bonati,player)
-    print(player.hp)
+    #print(player.hp)
     #print(Bonati.direction)
     #####################################################################################################################
+
+
+    #####################################################################################################################
+
+                                                  #BOLOGNESI#
+
+    #####################################################################################################################
+
+    # check if he is off-screen → RESPAWN
+    #ho tolto un due
+    if (Bolognesi.position[0] < -Bolognesi.size or 
+        Bolognesi.position[0] > xlim + Bolognesi.size or
+        Bolognesi.position[1] < -Bolognesi.size or
+        Bolognesi.position[1] > ylim + Bolognesi.size):
+        Bolognesi.accelerate()
+
+    # choose new spawn side
+        Bolognesi.spawn = np.random.randint(0,3)
+    
+    # random size
+        Bolognesi.size = np.random.randint(50, 300)
+        Bolognesi.hp = 1
+
+    # set initial spawn position
+        if Bolognesi.spawn == 0:  # north
+            Bolognesi.position = np.array([np.random.randint(0, xlim-Bolognesi.size), -Bolognesi.size], dtype=float)
+        elif Bolognesi.spawn == 1: # south
+            Bolognesi.position = np.array([np.random.randint(0, xlim-Bolognesi.size), ylim + Bolognesi.size], dtype=float)
+        elif Bolognesi.spawn == 2: # east
+            Bolognesi.position = np.array([xlim + Bolognesi.size,np.random.randint(0, ylim-Bolognesi.size)], dtype=float)
+        elif Bolognesi.spawn == 3: # west
+            Bolognesi.position = np.array([-Bolognesi.size,np.random.randint(0, ylim-Bolognesi.size)], dtype=float)
+    '''
+    print(
+    "Spawn =", Bolognesi.spawn,
+    "| Direction =", Bolognesi.direction,
+    "| Pos =", Bolognesi.position,
+    "| Size =", Bolognesi.size)'''
+
+    # move Bolognesi
+    Bolognesi.update_position()
+
+    # draw
+    Bolognesi.draw()
+
+    if Bolognesi.hp > 0:
+        hit(Bolognesi, player)
+
+    ################################################################################################################################
 
     if player.hp == 0:
         running=False
