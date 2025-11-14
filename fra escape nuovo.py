@@ -43,17 +43,25 @@ class Character:
         #Draw the character on the given screen.
         if self.hp >0:
             screen.blit(self.image, self.position)
+
+########################################################################################################################################
+
 #i metodi delle classi sono 
 #definizioni degli oggetti per quale motivo questo era sotto l'inzializzazione del gioco un po' di ordine Andrea che cazzo
 
 #oggetto player
 player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
 #oggetto bolognesi
-#Bolognesi = Character("bolognesi.jpeg",200,200,[np.random.randint(200,xlim-200),400],[0,0])
+
 #oggetto bonati
 Bonati = Character("bonati_Claudio-Bonati.jpg",70,10,0,[0,0],[0,0])
 #un nemico dovrebbe avere una size, delle coordinate a lui associate e un'immagine ben definita
 
+#######################################################################################################################################
+
+#immaginie e size cuori
+heart_size = 60
+life = [game.transform.smoothscale(game.image.load("1hp-Photoroom.png"),(3*heart_size,heart_size)),game.transform.smoothscale(game.image.load("2hp-Photoroom.png"),(3*heart_size,heart_size)),game.transform.smoothscale(game.image.load("3hp-Photoroom.png"),(3*heart_size,heart_size))]
 
 #evento jumpscare
 jumpscare=game.image.load('bolo_jumpscare.jpg')
@@ -77,12 +85,19 @@ while running:
     game.display.flip()
     screen.blit(background,(0,0))
 
-
     #game speed
     clock.tick(30)
 
+    #blit degli hp
+    #####################################################
+    if player.hp ==3:
+        screen.blit(life[2],(xlim - 3*heart_size -5,10))
+    elif player.hp ==2:
+        screen.blit(life[1],(xlim -3*heart_size -5,10))
+    elif player.hp ==1:
+        screen.blit(life[0],(xlim -3*heart_size -5,10))
+    #####################################################
 
-#andrea devi esplodereeeeee
     
     #game event jumpscare
     if event_jumpscare == score:
