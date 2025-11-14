@@ -14,7 +14,7 @@ score=-1/60
 def hit(obj1, obj2):
     overlap = np.abs(obj1.centre - obj2.centre) - (obj1.size + obj2.size)/2
     
-    if overlap[0]<=0 and overlap[1]<=0 and obj1.hp>0 and obj2.hp>0:
+    if overlap[0]<=0 and overlap[1]<=0:
         obj1.hp -=1
         obj2.hp -=1
 
@@ -131,7 +131,9 @@ while running:
     Bonati.direction = (last_n_position[0] - Bonati.position)/np.linalg.norm(last_n_position[0] - Bonati.position)
     Bonati.update_position()
     # checko l'hit con bonati
-    hit(Bonati,player)
+    if Bonati.hp ==1:
+        hit(Bonati,player)
+    print(player.hp)
     #print(Bonati.direction)
     #####################################################################################################################
 
