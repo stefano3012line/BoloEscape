@@ -8,13 +8,13 @@ screen = game.display.set_mode((xlim,ylim))
 clock = game.time.Clock()
 background=game.image.load('unipipi.jpeg')
 background=game.transform.smoothscale(background,(xlim,ylim))
-score=0
+score=-1/60
 
 #funzione che calcola se sei colpito o meno 
 def hit(obj1, obj2):
     overlap = np.abs(obj1.centre - obj2.centre) - (obj1.size + obj2.size)/2
     
-    if overlap[0]<=0 and overlap[1]<=0 and obj1.hp>0 and obj2.hp>0:
+    if overlap[0]<=0 and overlap[1]<=0 and obj1.hp >0 and obj2.hp >0:
         obj1.hp -=1
         obj2.hp -=1
 
@@ -23,15 +23,15 @@ def hit(obj1, obj2):
 
 class Character:
     def __init__(self, image, size, speed,hp, position, direction):
-        # Load and scale the image
+
         # Instance variables
         self.hp = hp
         self._size = size
         self.speed = speed
         self.position = np.array(position, dtype=float)
         self.direction = np.array(direction, dtype=float)
+        # Load and scale the image
         self.image = game.transform.smoothscale(game.image.load(image), (self.size, self.size))
-
     @property
     def size(self):
         return self._size
@@ -40,8 +40,7 @@ class Character:
     def size(self, new):
         self._size = new
         self.image = game.transform.smoothscale(self.image, (new, new))
-
-
+    
     @property   
     def centre(self):
         #Return the center point of the character
@@ -54,21 +53,68 @@ class Character:
         #Draw the character on the given screen.
         if self.hp >0:
             screen.blit(self.image, self.position)
+
+
+class Stefano(Character):
+    def __init__(self, image, size, speed,hp, position, direction, spawn):
+        super().__init__(image,size,speed,hp,position,direction)
+        self.spawn = spawn
+    @property
+    def size(self):
+        return self._size
+    
+    @size.setter
+    def size(self, new):
+        self._size = new
+        self.image = game.transform.smoothscale(self.image, (new, new))
+    @property
+    def centre(self):
+        #Return the center point of the character
+        return self.position + np.array([self.size / 2, self.size / 2])
+    def update_position(self):
+        #Move the character based on direction and speed
+        if self.spawn == 0: #north
+            self.direction = np.array([0, 1], dtype=float)
+        elif self.spawn == 1: #south
+            self.direction = np.array([0, -1], dtype=float)
+        elif self.spawn == 2: #east
+            self.direction = np.array([-1, 0], dtype=float)
+        elif self.spawn == 3: #west
+            self.direction = np.array([1, 0], dtype=float)
+        self.position += self.direction * self.speed/(5*np.sqrt(Bolognesi.size))
+    def accelerate(self):
+        #accellera bolognesi ogni volta che esce dallo schermo
+        self.speed += int((Bolognesi.speed/(2.5*score+1)))+1
+    def draw(self):
+        #Draw the character on the given screen.
+        if self.hp >0:
+            screen.blit(self.image, self.position)
+    
+
+########################################################################################################################################
+
 #i metodi delle classi sono 
 #definizioni degli oggetti per quale motivo questo era sotto l'inzializzazione del gioco un po' di ordine Andrea che cazzo
 
 #oggetto player
-player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
-#oggetto bolognesi
+player = Character("player.png",50,20,5,[xlim/2 - 25, ylim/2 - 25], [0,0])
 
-Bolognesi = Character("bolognesi.jpeg",200,600,0,[np.random.randint(200,xlim-200),400],[0,0])
-Bolognesi.hp=1
-Bolognesi_dir= 1
+#oggetto bolognesi
+Bolognesi = Stefano("bolognesi.jpeg",200,600,0,[0,0],[0,0],0)
+
 #oggetto bonati
-Bonati_spawn_value=np.random.randint(5,15)
 Bonati = Character("bonati_Claudio-Bonati.jpg",70,10,0,[0,0],[0,0])
+Bonati_spawn_value=np.random.randint(5,15)
 #un nemico dovrebbe avere una size, delle coordinate a lui associate e un'immagine ben definita
 
+#######################################################################################################################################
+
+#immaginie e size cuori
+heart_size = 60
+heart = game.transform.smoothscale(game.image.load("heart.png"),(heart_size,heart_size))
+
+
+#life = [game.transform.smoothscale(game.image.load("1hp-Photoroom.png"),(3*heart_size,heart_size)),game.transform.smoothscale(game.image.load("2hp-Photoroom.png"),(3*heart_size,heart_size)),game.transform.smoothscale(game.image.load("3hp-Photoroom.png"),(3*heart_size,heart_size))]
 
 #evento jumpscare
 jumpscare=game.image.load('bolo_jumpscare.jpg')
@@ -84,7 +130,7 @@ last_n_position = []
 game.init()
 running = True
 while running:
-    
+    score += 1/60
     for event in game.event.get():
         if event.type == game.QUIT:
             running = False
@@ -92,12 +138,8 @@ while running:
     game.display.flip()
     screen.blit(background,(0,0))
 
-
     #game speed
     clock.tick(30)
-
-
-#andrea devi esplodereeeeee
     
     #game event jumpscare
     if event_jumpscare == score:
@@ -139,110 +181,83 @@ while running:
     #####################################################################################################################
     #aggiungo claudio bonati
     #if int score è solo un proof of concept poi tocca fare una cosa seria per ora bonati spawna quando lo score è divisibile per 17 e despowna quando viene colpito
-    
     if int(score) == Bonati_spawn_value:
         Bonati.hp = 1
-        Bonati_spawn_value+= np.random.randint(5,15)
-
-
-   
+        Bonati_spawn_value+= np.random.randint(10,20)
+    
     Bonati.draw()
     Bonati.direction = (last_n_position[0] - Bonati.position)/np.linalg.norm(last_n_position[0] - Bonati.position)
     Bonati.update_position()
     # checko l'hit con bonati
-    
     hit(Bonati,player)
+    #print(player.hp)
     #print(Bonati.direction)
     #####################################################################################################################
 
-    #####################################################################################################################
 
     #####################################################################################################################
 
                                                   #BOLOGNESI#
 
     #####################################################################################################################
-    #aggiungo stefano bolognesi
 
+    # check if he is off-screen → RESPAWN
+    #ho tolto un due
+    if (Bolognesi.position[0] < -Bolognesi.size or 
+        Bolognesi.position[0] > xlim + Bolognesi.size or
+        Bolognesi.position[1] < -Bolognesi.size or
+        Bolognesi.position[1] > ylim + Bolognesi.size):
+        Bolognesi.accelerate()
+
+    # choose new spawn side
+        Bolognesi.spawn = np.random.randint(0,3)
     
-    
-    
-    #Bolognesi movement
-    if Bolognesi_dir == 0:#from north
-        if Bolognesi.position[1]>= -(2*Bolognesi.size) and Bolognesi.position[1]<=ylim+(Bolognesi.size*2):
-            Bolognesi.draw()
-            Bolognesi.position[1]+=Bolognesi.speed/(5*np.sqrt(Bolognesi.size))
+    # random size
+        Bolognesi.size = np.random.randint(50, 300)
+        Bolognesi.hp = 1
 
+    # set initial spawn position
+        if Bolognesi.spawn == 0:  #north
+            Bolognesi.position = np.array([np.random.randint(0, xlim-Bolognesi.size), -Bolognesi.size], dtype=float)
+        elif Bolognesi.spawn == 1: #south
+            Bolognesi.position = np.array([np.random.randint(0, xlim-Bolognesi.size), ylim + Bolognesi.size], dtype=float)
+        elif Bolognesi.spawn == 2: #east
+            Bolognesi.position = np.array([xlim + Bolognesi.size,np.random.randint(0, ylim-Bolognesi.size)], dtype=float)
+        elif Bolognesi.spawn == 3: #west
+            Bolognesi.position = np.array([-Bolognesi.size,np.random.randint(0, ylim-Bolognesi.size)], dtype=float)
 
-    elif Bolognesi_dir == 1:#from south
-        if Bolognesi.position[1]>= -(2*Bolognesi.size) and Bolognesi.position[1]<=ylim+(Bolognesi.size*2):
-            Bolognesi.draw()
-            Bolognesi.position[1] -= Bolognesi.speed/(5*np.sqrt(Bolognesi.size))
+    #print("Spawn =", Bolognesi.spawn,"| Direction =", Bolognesi.direction,"| Pos =", Bolognesi.position,"| Size =", Bolognesi.size "|speed =" Bolognesi.speed)
 
+    # move Bolognesi
+    Bolognesi.update_position()
 
-    elif Bolognesi_dir == 2:#from est
-        if Bolognesi.position[0]>= -(2*Bolognesi.size) and Bolognesi.position[0]<=xlim+(2*Bolognesi.size):
-            Bolognesi.draw()
-            Bolognesi.position[0] -= Bolognesi.speed/(5*np.sqrt(Bolognesi.size))
+    # draw
+    Bolognesi.draw()
+    #checking hit
+    hit(Bolognesi, player)
+    hit(Bolognesi, Bonati)
 
-
-
-    elif Bolognesi_dir == 3:#from west
-        if Bolognesi.position[0]>= -(2*Bolognesi.size) and Bolognesi.position[0]<=xlim+(2*Bolognesi.size):
-            Bolognesi.draw()
-            Bolognesi.position[0] += Bolognesi.speed/(5*np.sqrt(Bolognesi.size))
-
-
-        #giving random dir
-    if Bolognesi.position[1]< -(2*Bolognesi.size) or Bolognesi.position[1]>ylim+(Bolognesi.size*2) or Bolognesi.position[0]< -(2*Bolognesi.size) or Bolognesi.position[0]>xlim+(Bolognesi.size*2) :
-        Bolognesi_dir = np.random.randint(0,4)
-        Bolognesi.size = np.random.randint(10,500)
-        B_accell=int((Bolognesi.speed/(2.5*score+1)))+1
-        score+=1
-        
-
-
-
-#spawn for different directions size and speed
-        if Bolognesi_dir == 0:#from north
-           # Bolognesi.size=np.random.randint(size,3*size)
-            Bolognesi.position[0]= np.random.randint(0,xlim-Bolognesi.size)
-            Bolognesi.position[1]= -(2*Bolognesi.size)
-            Bolognesi.speed+= B_accell
-        elif Bolognesi_dir == 2:#from est
-           # Bolognesi.size=np.random.randint(size,3*size)
-            Bolognesi.position[1]= np.random.randint(0,ylim-Bolognesi.size)
-            Bolognesi.position[0]= xlim+(2*Bolognesi.size)
-            Bolognesi.speed+= B_accell
-        elif Bolognesi_dir == 1:#from south
-           # Bolognesi.size=np.random.randint(size,3*size)
-            Bolognesi.position[0]= np.random.randint(0,xlim-Bolognesi.size)
-            Bolognesi.position[1]= ylim +(2*Bolognesi.size)
-            Bolognesi.speed+= B_accell
-        elif Bolognesi_dir == 3:#from west
-           # Bolognesi.size=np.random.randint(size,3*size)
-            Bolognesi.position[1]= np.random.randint(0,ylim-Bolognesi.size)
-            Bolognesi.position[0]= -(2*Bolognesi.size)
-            Bolognesi.speed+= B_accell
-    
+    ################################################################################################################################
 
     if player.hp == 0:
         running=False
-
-    # Font per il punteggio
-    font = game.font.SysFont('Arial', 40)
+    ################################################################################################################################
+    #informazioni testo
+    font = game.font.SysFont('Monocraft', 40)
     text_color = (0, 0, 0)
 
-    # Mostra il punteggio a schermo
+    #blit dello score
     score_text = font.render(f"Score: {int(score)}", True, text_color)
     screen.blit(score_text, (20, 20))  # posizione (x=20, y=20)
 
+    #blit degli hp
+    for i in range(1,player.hp+1):
+        screen.blit(heart,(xlim - i*heart_size -5,10))
+    ################################################################################################################################
+
+
     game.display.update()
-
-
-
-
-
+    
 
 #end game routine
 background=game.image.load('death_screen.jpg')
@@ -250,7 +265,7 @@ background=game.transform.smoothscale(background,(xlim,ylim))
 screen.blit(background,(0,0))
 text_color = (255, 255, 255)
 font = game.font.SysFont('Aptos', 70)
-score_text = font.render(f"Score: {int(score)}", True, text_color)
+score_text = font.render(f"Score: {score}", True, text_color)
 screen.blit(score_text, (300, 480))
 
 game.display.update()
