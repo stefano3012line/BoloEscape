@@ -8,15 +8,21 @@ screen = game.display.set_mode((xlim,ylim))
 clock = game.time.Clock()
 background=game.image.load('unipipi.jpeg')
 background=game.transform.smoothscale(background,(xlim,ylim))
-score=-1/60
+score= 0
 
 #funzione che calcola se sei colpito o meno 
+
 def hit(obj1, obj2):
-    overlap = np.abs(obj1.centre - obj2.centre) - (obj1.size + obj2.size)/2
-    
-    if overlap[0]<=0 and overlap[1]<=0 and obj1.hp >0 and obj2.hp >0:
-        obj1.hp -=1
-        obj2.hp -=1
+    if obj1.hp > 0 and obj2.hp > 0:
+        # aggiorna rect
+        obj1.rect.topleft = obj1.position
+        obj2.rect.topleft = obj2.position
+        #offset necessario per overlap
+        #offset = (int(obj2.rect.x - obj1.rect.x), int(obj2.rect.y - obj1.rect.y))
+        if obj1.mask.overlap(obj2.mask,(int(obj2.rect.x - obj1.rect.x), int(obj2.rect.y - obj1.rect.y))):
+            obj1.hp -= 1
+            obj2.hp -= 1
+            return True
 
 #definizione della classe dei nemici semplici e player
 #personaggio definito come: immagine,taglia,velocità, hitpoints, vettore posizione,vettore direzione in questo ordine
@@ -32,6 +38,10 @@ class Character:
         self.direction = np.array(direction, dtype=float)
         # Load and scale the image
         self.image = game.transform.smoothscale(game.image.load(image), (self.size, self.size))
+        self.rect = self.image.get_rect()
+        self.mask = game.mask.from_surface(self.image)
+        self.rect.topleft = self.position
+
     @property
     def size(self):
         return self._size
@@ -49,6 +59,7 @@ class Character:
         #Move the character based on direction and speed
         if self.hp> 0:
             self.position += self.direction * self.speed
+            self.rect.topleft = self.position
     def draw(self):
         #Draw the character on the given screen.
         if self.hp >0:
@@ -82,9 +93,13 @@ class Stefano(Character):
         elif self.spawn == 3: #west
             self.direction = np.array([1, 0], dtype=float)
         self.position += self.direction * self.speed/(5*np.sqrt(Bolognesi.size))
+        self.rect.topleft = self.position
+    def update_mask(self):
+        self.rect = self.image.get_rect()
+        self.mask = game.mask.from_surface(self.image)
     def accelerate(self):
         #accellera bolognesi ogni volta che esce dallo schermo
-        self.speed += int((Bolognesi.speed/(2.5*score+1)))+1
+        self.speed += int((Bolognesi.speed/(4*score+1))) 
     def draw(self):
         #Draw the character on the given screen.
         if self.hp >0:
@@ -100,21 +115,18 @@ class Stefano(Character):
 player = Character("player.png",50,20,5,[xlim/2 - 25, ylim/2 - 25], [0,0])
 
 #oggetto bolognesi
-Bolognesi = Stefano("bolognesi.jpeg",200,600,0,[0,0],[0,0],0)
+Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0],0)
 
 #oggetto bonati
-Bonati = Character("bonati_Claudio-Bonati.jpg",70,10,0,[0,0],[0,0])
-Bonati_spawn_value=np.random.randint(5,15)
+Bonati = Character("bonati_Claudio-Bonati.jpg",70,15,0,[0,0],[0,0])
+Bonati_spawn_value= 4
 #un nemico dovrebbe avere una size, delle coordinate a lui associate e un'immagine ben definita
 
 #######################################################################################################################################
 
 #immaginie e size cuori
 heart_size = 60
-heart = game.transform.smoothscale(game.image.load("heart.png"),(heart_size,heart_size))
-
-
-#life = [game.transform.smoothscale(game.image.load("1hp-Photoroom.png"),(3*heart_size,heart_size)),game.transform.smoothscale(game.image.load("2hp-Photoroom.png"),(3*heart_size,heart_size)),game.transform.smoothscale(game.image.load("3hp-Photoroom.png"),(3*heart_size,heart_size))]
+heart = game.transform.smoothscale(game.image.load("massimino.png"),(heart_size,heart_size))
 
 #evento jumpscare
 jumpscare=game.image.load('bolo_jumpscare.jpg')
@@ -130,7 +142,7 @@ last_n_position = []
 game.init()
 running = True
 while running:
-    score += 1/60
+    #score += 1/60
     for event in game.event.get():
         if event.type == game.QUIT:
             running = False
@@ -157,16 +169,26 @@ while running:
     player.draw()
     #si ridefinisce la posizione ogni frame
     player.direction = np.array([0,0])
-
+    direction_pressed = [True,True]
     #player movement
-    if  game.key.get_pressed()[game.K_s]and player.position[1] <= ylim - (player.size+player.speed):
+    if game.key.get_pressed()[game.K_s]and player.position[1]<= ylim - (player.size+player.speed):
         player.direction[1] = 1
-    if  game.key.get_pressed()[game.K_w]and player.position[1] >= player.speed:
+        direction_pressed[1] = not direction_pressed[1] 
+    if game.key.get_pressed()[game.K_w]and player.position[1]>= player.speed:
         player.direction[1] = -1
-    if  game.key.get_pressed()[game.K_d] and player.position[0]<= xlim -(player.size+player.speed):
+        direction_pressed[1] = not direction_pressed[1]
+    if game.key.get_pressed()[game.K_d] and player.position[0]<= xlim -(player.size+player.speed):
         player.direction[0] = 1
-    if  game.key.get_pressed()[game.K_a] and player.position[0] >= player.speed:
+        direction_pressed[0] = not direction_pressed[0]
+    if game.key.get_pressed()[game.K_a] and player.position[0] >= player.speed:
         player.direction[0] = -1
+        direction_pressed[0] = not direction_pressed[0]
+    if direction_pressed[0]:
+        player.direction[0] = 0
+    if direction_pressed[1]:
+        player.direction[1] = 0
+
+    
     
     player.update_position()
     last_n_position.append(player.position)
@@ -183,11 +205,13 @@ while running:
     #if int score è solo un proof of concept poi tocca fare una cosa seria per ora bonati spawna quando lo score è divisibile per 17 e despowna quando viene colpito
     if int(score) == Bonati_spawn_value:
         Bonati.hp = 1
-        Bonati_spawn_value+= np.random.randint(10,20)
-    
+        Bonati_spawn_value = score + np.random.randint(7,13)
+    if Bonati.hp == 0:
+        Bonati.position =np.array([0,0],dtype=float)
     Bonati.draw()
     Bonati.direction = (last_n_position[0] - Bonati.position)/np.linalg.norm(last_n_position[0] - Bonati.position)
     Bonati.update_position()
+    
     # checko l'hit con bonati
     hit(Bonati,player)
     #print(player.hp)
@@ -208,7 +232,9 @@ while running:
         Bolognesi.position[1] < -Bolognesi.size or
         Bolognesi.position[1] > ylim + Bolognesi.size):
         Bolognesi.accelerate()
-
+        print(Bolognesi.speed)
+        score+=1
+        
     # choose new spawn side
         Bolognesi.spawn = np.random.randint(0,3)
     
@@ -230,12 +256,15 @@ while running:
 
     # move Bolognesi
     Bolognesi.update_position()
-
+    Bolognesi.update_mask()
+    
     # draw
     Bolognesi.draw()
     #checking hit
     hit(Bolognesi, player)
-    hit(Bolognesi, Bonati)
+    if hit(Bolognesi, Bonati):
+        score +=1
+        
 
     ################################################################################################################################
 
@@ -252,7 +281,7 @@ while running:
 
     #blit degli hp
     for i in range(1,player.hp+1):
-        screen.blit(heart,(xlim - i*heart_size -5,10))
+        screen.blit(heart,(xlim - i*heart_size,10))
     ################################################################################################################################
 
 
@@ -265,7 +294,7 @@ background=game.transform.smoothscale(background,(xlim,ylim))
 screen.blit(background,(0,0))
 text_color = (255, 255, 255)
 font = game.font.SysFont('Aptos', 70)
-score_text = font.render(f"Score: {score}", True, text_color)
+score_text = font.render(f"Score: {int(score)}", True, text_color)
 screen.blit(score_text, (300, 480))
 
 game.display.update()
