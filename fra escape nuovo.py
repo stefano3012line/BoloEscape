@@ -70,18 +70,6 @@ class Stefano(Character):
     def __init__(self, image, size, speed,hp, position, direction, spawn):
         super().__init__(image,size,speed,hp,position,direction)
         self.spawn = spawn
-    @property
-    def size(self):
-        return self._size
-    
-    @size.setter
-    def size(self, new):
-        self._size = new
-        self.image = game.transform.smoothscale(self.image, (new, new))
-    @property
-    def centre(self):
-        #Return the center point of the character
-        return self.position + np.array([self.size / 2, self.size / 2])
     def update_position(self):
         #Move the character based on direction and speed
         if self.spawn == 0: #north
@@ -100,10 +88,6 @@ class Stefano(Character):
     def accelerate(self):
         #accellera bolognesi ogni volta che esce dallo schermo
         self.speed += int((Bolognesi.speed/(4*score+1))) 
-    def draw(self):
-        #Draw the character on the given screen.
-        if self.hp >0:
-            screen.blit(self.image, self.position)
     
 
 ########################################################################################################################################
@@ -240,6 +224,7 @@ while running:
     
     # random size
         Bolognesi.size = np.random.randint(50, 300)
+        Bolognesi.update_mask()
         Bolognesi.hp = 1
 
     # set initial spawn position
@@ -256,7 +241,7 @@ while running:
 
     # move Bolognesi
     Bolognesi.update_position()
-    Bolognesi.update_mask()
+    
     
     # draw
     Bolognesi.draw()
