@@ -117,7 +117,7 @@ class shooter(Character):
         V2 = rotate_Vector(V1.copy(),self.spread/2)
         V3 = rotate_Vector(V1.copy(),-self.spread/2)
         direction = [V1,V2,V3] 
-        print(direction)
+        #print(direction)
         proj = []
         for i in direction:
            proj.append(Character('heart.png',40,50,1,working_position,i.copy())) #+ self.size/2 serve solo a far sparare dal punto della pistola
