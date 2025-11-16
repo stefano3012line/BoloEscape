@@ -30,13 +30,21 @@ def rotate_Vector(V,phi):
     R = np.array([[np.cos(theta), -np.sin(theta)],
                   [np.sin(theta),  np.cos(theta)]])
     return R@V
+#funzione che calcola se un oggetto è out of bound
+def outofbound(obj,x,y):
+    if (obj.position[0] < -obj.size or 
+       obj.position[0] > x + obj.size or
+        obj.position[1] < -obj.size or
+        obj.position[1] > y + obj.size):
+        return True
 #definizione delle classi
+
 #########################################################################################################################################
 
 class Character:
     def __init__(self, image, size, speed,hp, position, direction):
 
-        # Instance variables
+        # Instance variable
         self.hp = hp
         self._size = size
         self.speed = speed
@@ -95,25 +103,16 @@ class Stefano(Character):
         #accellera bolognesi ogni volta che esce dallo schermo
         self.speed += int((Bolognesi.speed/(4*score+1))) 
 
-class shooter:
-    def __init__(self,image,size,hp,position,timer,spread):
-        
+class shooter(Character):
+    def __init__(self, image, size, speed,hp, position, direction,timer,spread):
+        super().__init__(image,size,speed,hp,position,direction)
         self.timer= timer
         self.spread = spread #ampiezza angolare dello sparo (in gradi)
-        self.hp = hp
-        self.size = size
-        self.position = np.array(position, dtype=float)
-        #se gli shooter non avranno hitbox òa roba di mask e rect non serve ma per ora la lascio
-        self.image = game.transform.smoothscale(game.image.load(image), (self.size, self.size))
-        self.rect = self.image.get_rect()
-        self.mask = game.mask.from_surface(self.image)
-        self.rect.topleft = self.position
     def addtimer(self):
         if self.hp > 0:
             self.timer +=1
-
     def load_projectile(self,point):
-        working_position = self.position.copy()
+        working_position = self.position.copy() +(0,self.size/2)  #+ self.size/2 serve solo a far sparare dal punto della pistola
         V1 = (point - working_position)/np.linalg.norm(point - working_position)
         V2 = rotate_Vector(V1.copy(),self.spread/2)
         V3 = rotate_Vector(V1.copy(),-self.spread/2)
@@ -121,36 +120,8 @@ class shooter:
         print(direction)
         proj = []
         for i in direction:
-           proj.append(projectile('heart.png',40,20,1,working_position,i.copy()))
+           proj.append(Character('heart.png',40,50,1,working_position,i.copy())) #+ self.size/2 serve solo a far sparare dal punto della pistola
         return proj
-    
-    def draw(self):
-        #Draw the character on the given screen.
-        if self.hp >0:
-            screen.blit(self.image, self.position)
-
-class projectile:
-    def __init__(self,image,size,speed,hp,position,direction):
-        self.outofbound = False
-        self.size = size
-        self.speed = speed
-        self.hp = hp
-        self.position = np.array(position,dtype=float)
-        self.direction = np.array(direction,dtype=float)
-        print(self.direction)
-        self.image = game.transform.smoothscale(game.image.load(image), (size,size))
-        self.rect = self.image.get_rect()
-        self.mask = game.mask.from_surface(self.image)
-        self.rect.topleft = self.position
-    def update_position(self):
-        #Move the character based on direction and speed
-        if self.hp> 0:
-            self.position += self.direction * self.speed
-            self.rect.topleft = self.position
-    def draw(self):
-        #Draw the character on the given screen.
-        if self.hp >0:
-            screen.blit(self.image, self.position)
 ########################################################################################################################################
 
 #creazione degli oggetti
@@ -166,7 +137,7 @@ Bonati = Character("bonati_Claudio-Bonati.jpg",70,15,0,[0,0],[0,0])
 Bonati_spawn_value= 4
 
 #oggetto meggiolaro e lista dei proiettili
-Meggiolaro = shooter("meggioladro.png",200,0,[xlim -200,ylim -200],0,30)
+Meggiolaro = shooter("meggioladro.png",200,0,0,[xlim -200,ylim -200],[0,0],0,30)
 Meggiolaro_spawn_value= 2
 Proiettili = []
 
@@ -201,12 +172,12 @@ while running:
     clock.tick(30)
     
     #game event jumpscare
-    if event_jumpscare == score:
-        screen.blit(jumpscare,(0,0))
-        game.display.update()
-        time.sleep(0.3)
-        event_jumpscare+=np.random.randint(5,15)
-        score+=1
+    #if event_jumpscare == score:
+        #screen.blit(jumpscare,(0,0))
+        #game.display.update()
+        #time.sleep(0.3)
+        #event_jumpscare+=np.random.randint(5,15)
+        #score+=1
     ###################################################################################################################
 
                                                     #PLAYER#
@@ -277,12 +248,9 @@ while running:
 
     # check if he is off-screen → RESPAWN
     #ho tolto un due
-    if (Bolognesi.position[0] < -Bolognesi.size or 
-        Bolognesi.position[0] > xlim + Bolognesi.size or
-        Bolognesi.position[1] < -Bolognesi.size or
-        Bolognesi.position[1] > ylim + Bolognesi.size):
+    if outofbound(Bolognesi,xlim,ylim):
         Bolognesi.accelerate()
-        print(Bolognesi.speed)
+        #print(Bolognesi.speed)
         score+=1
         
     # choose new spawn side
@@ -323,24 +291,29 @@ while running:
     ################################################################################################################################
     if score == Meggiolaro_spawn_value:
         Meggiolaro.hp = 1
-        Meggiolaro_spawn_value += 40
+        
     if Meggiolaro.hp == 1:
         Meggiolaro.addtimer()
+        #print(Proiettili)
         #print(Meggiolaro.timer)
-    if Meggiolaro.timer == 60:
+    if Meggiolaro.timer == Meggiolaro_spawn_value + 60:
         Proiettili += (Meggiolaro.load_projectile(player.position))
         #print(Proiettili)
     if Meggiolaro.timer == 30*4: #30 è il numero di frame quindi 30*4 = 4 secondi
         Meggiolaro.hp = 0
+        Meggiolaro.timer = 0
+        Meggiolaro_spawn_value = score + 15
     Meggiolaro.draw()
     ################################################################################################################################
+
     if len(Proiettili) >0:
         for i in Proiettili:
             i.update_position()
             #print(i.direction)
             i.draw()
-            if hit(i,player):
+            if hit(i,player) or outofbound(i,xlim,ylim):
                 Proiettili.remove(i)
+    
     ################################################################################################################################
 
 
