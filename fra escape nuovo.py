@@ -26,7 +26,7 @@ def hit(obj1, obj2):
 #funzione che ruopta i vettori #serve per meggiolaro
 
 def rotate_Vector(V,phi):
-    theta = np.radians(phi)
+    theta = phi*np.pi/180
     R = np.array([[np.cos(theta), -np.sin(theta)],
                   [np.sin(theta),  np.cos(theta)]])
     return R@V
@@ -111,22 +111,17 @@ class shooter:
     def addtimer(self):
         if self.hp > 0:
             self.timer +=1
-    '''
-    def target(self,point):
-        V1 = (point - self.position)/np.linalg.norm(point - self.position)
-        V2 = rotate_Vector(V1,self.spread/2)
-        V3 = rotate_Vector(V1,-self.spread/2)
-        return V1,V2,V3
-    '''
+
     def load_projectile(self,point):
         working_position = self.position.copy()
         V1 = (point - working_position)/np.linalg.norm(point - working_position)
-        V2 = rotate_Vector(V1,self.spread/2)
-        V3 = rotate_Vector(V1,-self.spread/2)
+        V2 = rotate_Vector(V1.copy(),self.spread/2)
+        V3 = rotate_Vector(V1.copy(),-self.spread/2)
         direction = [V1,V2,V3] 
+        print(direction)
         proj = []
         for i in direction:
-           proj.append(projectile('heart.png',40,20,1,working_position,i))
+           proj.append(projectile('heart.png',40,20,1,working_position,i.copy()))
         return proj
     
     def draw(self):
@@ -140,8 +135,9 @@ class projectile:
         self.size = size
         self.speed = speed
         self.hp = hp
-        self.position = position
-        self.direction = direction
+        self.position = np.array(position,dtype=float)
+        self.direction = np.array(direction,dtype=float)
+        print(self.direction)
         self.image = game.transform.smoothscale(game.image.load(image), (size,size))
         self.rect = self.image.get_rect()
         self.mask = game.mask.from_surface(self.image)
@@ -155,7 +151,6 @@ class projectile:
         #Draw the character on the given screen.
         if self.hp >0:
             screen.blit(self.image, self.position)
-#funzione per sparare
 ########################################################################################################################################
 
 #creazione degli oggetti
@@ -169,10 +164,12 @@ Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0],0)
 #oggetto bonati
 Bonati = Character("bonati_Claudio-Bonati.jpg",70,15,0,[0,0],[0,0])
 Bonati_spawn_value= 4
-#un nemico dovrebbe avere una size, delle coordinate a lui associate e un'immagine ben definita
-Meggiolaro = shooter("meggioladro.png",100,0,[0,0],0,90)
-Meggiolaro_spawn_value= 11
+
+#oggetto meggiolaro e lista dei proiettili
+Meggiolaro = shooter("meggioladro.png",200,0,[xlim -200,ylim -200],0,30)
+Meggiolaro_spawn_value= 2
 Proiettili = []
+
 #immaginie e size cuori
 heart_size = 60
 heart = game.transform.smoothscale(game.image.load("massimino.png"),(heart_size,heart_size))
@@ -181,7 +178,6 @@ heart = game.transform.smoothscale(game.image.load("massimino.png"),(heart_size,
 jumpscare=game.image.load('bolo_jumpscare.jpg')
 jumpscare=game.transform.smoothscale(jumpscare,(xlim,ylim))
 event_jumpscare= np.random.randint(5,10)
-
 #######################################################################################################################################
 
 #lista in cui salviamo le posizioni del player serve per bonati e servirà anche per meggiolaro e lamanna
@@ -333,7 +329,7 @@ while running:
         #print(Meggiolaro.timer)
     if Meggiolaro.timer == 60:
         Proiettili += (Meggiolaro.load_projectile(player.position))
-        print(Proiettili)
+        #print(Proiettili)
     if Meggiolaro.timer == 30*4: #30 è il numero di frame quindi 30*4 = 4 secondi
         Meggiolaro.hp = 0
     Meggiolaro.draw()
@@ -341,14 +337,20 @@ while running:
     if len(Proiettili) >0:
         for i in Proiettili:
             i.update_position()
+            #print(i.direction)
             i.draw()
-            hit(i,player)
-            if i.hp == 0:
+            if hit(i,player):
                 Proiettili.remove(i)
     ################################################################################################################################
 
+
+
+
     if player.hp == 0:
         running=False
+
+
+    
     ################################################################################################################################
     #informazioni testo
     font = game.font.SysFont('Monocraft', 40)
