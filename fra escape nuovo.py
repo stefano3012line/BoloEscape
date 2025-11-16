@@ -23,9 +23,15 @@ def hit(obj1, obj2):
             obj1.hp -= 1
             obj2.hp -= 1
             return True
+#funzione che ruopta i vettori #serve per meggiolaro
 
-#definizione della classe dei nemici semplici e player
-#personaggio definito come: immagine,taglia,velocità, hitpoints, vettore posizione,vettore direzione in questo ordine
+def rotate_Vector(V,phi):
+    theta = np.radians(phi)
+    R = np.array([[np.cos(theta), -np.sin(theta)],
+                  [np.sin(theta),  np.cos(theta)]])
+    return R@V
+#definizione delle classi
+#########################################################################################################################################
 
 class Character:
     def __init__(self, image, size, speed,hp, position, direction):
@@ -88,13 +94,72 @@ class Stefano(Character):
     def accelerate(self):
         #accellera bolognesi ogni volta che esce dallo schermo
         self.speed += int((Bolognesi.speed/(4*score+1))) 
-    
 
+class shooter:
+    def __init__(self,image,size,hp,position,timer,spread):
+        
+        self.timer= timer
+        self.spread = spread #ampiezza angolare dello sparo (in gradi)
+        self.hp = hp
+        self.size = size
+        self.position = np.array(position, dtype=float)
+        #se gli shooter non avranno hitbox òa roba di mask e rect non serve ma per ora la lascio
+        self.image = game.transform.smoothscale(game.image.load(image), (self.size, self.size))
+        self.rect = self.image.get_rect()
+        self.mask = game.mask.from_surface(self.image)
+        self.rect.topleft = self.position
+    def addtimer(self):
+        if self.hp > 0:
+            self.timer +=1
+    '''
+    def target(self,point):
+        V1 = (point - self.position)/np.linalg.norm(point - self.position)
+        V2 = rotate_Vector(V1,self.spread/2)
+        V3 = rotate_Vector(V1,-self.spread/2)
+        return V1,V2,V3
+    '''
+    def load_projectile(self,point):
+        working_position = self.position.copy()
+        V1 = (point - working_position)/np.linalg.norm(point - working_position)
+        V2 = rotate_Vector(V1,self.spread/2)
+        V3 = rotate_Vector(V1,-self.spread/2)
+        direction = [V1,V2,V3] 
+        proj = []
+        for i in direction:
+           proj.append(projectile('heart.png',40,20,1,working_position,i))
+        return proj
+    
+    def draw(self):
+        #Draw the character on the given screen.
+        if self.hp >0:
+            screen.blit(self.image, self.position)
+
+class projectile:
+    def __init__(self,image,size,speed,hp,position,direction):
+        self.outofbound = False
+        self.size = size
+        self.speed = speed
+        self.hp = hp
+        self.position = position
+        self.direction = direction
+        self.image = game.transform.smoothscale(game.image.load(image), (size,size))
+        self.rect = self.image.get_rect()
+        self.mask = game.mask.from_surface(self.image)
+        self.rect.topleft = self.position
+    def update_position(self):
+        #Move the character based on direction and speed
+        if self.hp> 0:
+            self.position += self.direction * self.speed
+            self.rect.topleft = self.position
+    def draw(self):
+        #Draw the character on the given screen.
+        if self.hp >0:
+            screen.blit(self.image, self.position)
+#funzione per sparare
 ########################################################################################################################################
 
-#i metodi delle classi sono 
-#definizioni degli oggetti per quale motivo questo era sotto l'inzializzazione del gioco un po' di ordine Andrea che cazzo
-
+#creazione degli oggetti
+########################################################################################################################################
 #oggetto player
 player = Character("player.png",50,20,5,[xlim/2 - 25, ylim/2 - 25], [0,0])
 
@@ -105,9 +170,9 @@ Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0],0)
 Bonati = Character("bonati_Claudio-Bonati.jpg",70,15,0,[0,0],[0,0])
 Bonati_spawn_value= 4
 #un nemico dovrebbe avere una size, delle coordinate a lui associate e un'immagine ben definita
-
-#######################################################################################################################################
-
+Meggiolaro = shooter("meggioladro.png",100,0,[0,0],0,90)
+Meggiolaro_spawn_value= 11
+Proiettili = []
 #immaginie e size cuori
 heart_size = 60
 heart = game.transform.smoothscale(game.image.load("massimino.png"),(heart_size,heart_size))
@@ -117,7 +182,9 @@ jumpscare=game.image.load('bolo_jumpscare.jpg')
 jumpscare=game.transform.smoothscale(jumpscare,(xlim,ylim))
 event_jumpscare= np.random.randint(5,10)
 
-#lista in cui salviamo le posizioni del player per bonati
+#######################################################################################################################################
+
+#lista in cui salviamo le posizioni del player serve per bonati e servirà anche per meggiolaro e lamanna
 #deve essere una lista perché il modo in cui funziona np.append appiattisce in 1D e quindi le posizioni non funzionano più
 #usiamo lista e append nativo di pyton
 last_n_position = []
@@ -190,10 +257,13 @@ while running:
     if int(score) == Bonati_spawn_value:
         Bonati.hp = 1
         Bonati_spawn_value = score + np.random.randint(7,13)
+    if Bonati.hp ==1:
+        Bonati.direction = (last_n_position[0] - Bonati.position)/np.linalg.norm(last_n_position[0] - Bonati.position)
     if Bonati.hp == 0:
-        Bonati.position =np.array([0,0],dtype=float)
+        Bonati.position = np.array([0,0],dtype=float)
     Bonati.draw()
-    Bonati.direction = (last_n_position[0] - Bonati.position)/np.linalg.norm(last_n_position[0] - Bonati.position)
+    
+
     Bonati.update_position()
     
     # checko l'hit con bonati
@@ -241,16 +311,40 @@ while running:
 
     # move Bolognesi
     Bolognesi.update_position()
-    
-    
     # draw
     Bolognesi.draw()
     #checking hit
     hit(Bolognesi, player)
     if hit(Bolognesi, Bonati):
         score +=1
-        
+    ################################################################################################################################
 
+
+    ################################################################################################################################
+                                            
+                                            #MEGGIOLARO#
+
+    ################################################################################################################################
+    if score == Meggiolaro_spawn_value:
+        Meggiolaro.hp = 1
+        Meggiolaro_spawn_value += 40
+    if Meggiolaro.hp == 1:
+        Meggiolaro.addtimer()
+        #print(Meggiolaro.timer)
+    if Meggiolaro.timer == 60:
+        Proiettili += (Meggiolaro.load_projectile(player.position))
+        print(Proiettili)
+    if Meggiolaro.timer == 30*4: #30 è il numero di frame quindi 30*4 = 4 secondi
+        Meggiolaro.hp = 0
+    Meggiolaro.draw()
+    ################################################################################################################################
+    if len(Proiettili) >0:
+        for i in Proiettili:
+            i.update_position()
+            i.draw()
+            hit(i,player)
+            if i.hp == 0:
+                Proiettili.remove(i)
     ################################################################################################################################
 
     if player.hp == 0:

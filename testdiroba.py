@@ -16,4 +16,20 @@ x = np.arange(len(y))
 plt.figure()
 plt.subplot(1,1,1)
 plt.plot(x,y)
-plt.show()
+#plt.show()
+
+a = [1,2,3]
+b=a.copy()
+b *= 2
+print(a,b)
+
+def rotate_Vector(V,theta):
+    #theta = np.radians(phi)
+    R = np.array([[np.cos(theta), -np.sin(theta)],
+                  [np.sin(theta),  np.cos(theta)]])
+    print(R)
+    return  R@V
+
+v1 = np.array((0,1))
+v2 = rotate_Vector(v1,np.pi/2)
+print(v2)
