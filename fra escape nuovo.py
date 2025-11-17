@@ -1,7 +1,6 @@
 import pygame as game
 import numpy as np
 import time
-
 #dimensioni schermo
 xlim,ylim=1280,720
 screen = game.display.set_mode((xlim,ylim))
@@ -12,7 +11,7 @@ score= 0
 
 #funzione che calcola se sei colpito o meno 
 #attenzione il primo oggetto che si passa alla funzione è quello a cui si applica l'effetto
-def hit(obj1, obj2,key,t):
+def hit(obj1, obj2,key = None,t = None):
     if obj1.hp > 0 and obj2.hp > 0:
         # aggiorna rect
         obj1.rect.topleft = obj1.position
@@ -22,7 +21,10 @@ def hit(obj1, obj2,key,t):
         if obj1.mask.overlap(obj2.mask,(int(obj2.rect.x - obj1.rect.x), int(obj2.rect.y - obj1.rect.y))):
             if obj1.hittable: 
                 obj1.hp -= 1
-                obj1.status_effects.append(status(t,key))
+                obj1.status_effects.append(status(30,'invincible')) #di default ti rende invincibile per mezzo secondo 
+                if (key is not None) and (t is not None):           #aggiunge un altro effetto se voluto
+                    for i,j in zip(t,key):
+                        obj1.status_effects.append(status(i,j))
             if obj2.hittable: 
                 obj2.hp -= 1
             return True
@@ -61,7 +63,7 @@ class Character:
         self.mask = game.mask.from_surface(self.image)
         self.rect.topleft = self.position
         #status effects
-        self.status_effects =[]
+        self.status_effects = []
     @property
     def size(self):
         return self._size
@@ -92,7 +94,7 @@ class Character:
 '''
         expired = []
         for effect in self.status_effects:
-            if effect.apply(self):     # returns True if expired
+            if effect.apply(self):     # returns False if expired
                 expired.append(effect)
 
         # remove ended effects
@@ -147,16 +149,16 @@ class status:
         self.duration = duration
         self.key = key
     def apply(self,obj):
-            if self.key == 'fire':
-                if self.duration %30 == 0:
-                    obj.hp -= 1
-            elif self.key == 'freeze':
-                obj.speed = obj.base_speed/2
-            elif self.key == 'invincible':
-                obj.hittable = False
+        if self.key == 'fire':
+            if self.duration %30 == 0:
+                obj.hp -= 1
+        elif self.key == 'freeze':
+            obj.speed = obj.base_speed/2
+        elif self.key == 'invincible':
+            obj.hittable = False
 
-            self.duration -=1
-            return self.duration > 0
+        self.duration -=1
+        return self.duration > 0
 
 ########################################################################################################################################
 
@@ -166,15 +168,15 @@ class status:
 
 #oggetto player
 player = Character("player.png",50,20,5,[xlim/2 - 25, ylim/2 - 25], [0,0])
-
+#player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
+#player.status_effects.append(status(90,'fire'))
 #oggetto bolognesi
 Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0],0)
 
 #oggetto bonati
-Bonati = Character("bonati_Claudio-Bonati.jpg",70,15,0,[0,0],[0,0])
+Bonati = Character("bonati_Claudio-Bonati.jpg",70,10,0,[0,0],[0,0])
 Bonati_spawn_value= 4
-#player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
-#player.status_effects.append(status(90,'fire'))
+
 #oggetto meggiolaro e lista dei proiettili
 Meggiolaro = shooter("meggioladro.png",200,0,0,[xlim -200,ylim -200],[0,0],0,30)
 Meggiolaro_spawn_value= 2
@@ -204,7 +206,7 @@ while running:
         if event.type == game.QUIT:
             running = False
     #sistema di coordinate centrato in alto a sinistra e background
-    game.display.flip()
+    #game.display.flip()
     screen.blit(background,(0,0))
 
     #game speed
@@ -277,7 +279,7 @@ while running:
     Bonati.update_position()
     
     # checko l'hit con bonati
-    hit(player,Bonati,'invincible',30)
+    hit(player,Bonati)
     #print(player.hp)
     #print(Bonati.direction)
     #####################################################################################################################
@@ -295,7 +297,7 @@ while running:
         Bolognesi.accelerate()
         #print(Bolognesi.speed)
         score+=1
-        
+   
     # choose new spawn side
         Bolognesi.spawn = np.random.randint(0,3)
     
@@ -321,8 +323,8 @@ while running:
     # draw
     Bolognesi.draw()
     #checking hit
-    hit(player, Bolognesi,'invincible',30)
-    if hit(Bolognesi, Bonati,'invincible',1):
+    hit(player, Bolognesi)
+    if hit(Bolognesi, Bonati):
         score +=1
     ################################################################################################################################
 
@@ -363,7 +365,7 @@ while running:
             i.update_position()
             #print(i.direction)
             i.draw()
-            if hit(player,i,'freeze',60) or outofbound(i,xlim,ylim):
+            if hit(player,i,['freeze'],[60]) or outofbound(i,xlim,ylim):
                 Proiettili.remove(i)
     
     ################################################################################################################################
