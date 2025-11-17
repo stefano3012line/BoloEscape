@@ -129,7 +129,7 @@ class shooter(Character):
 #creazione degli oggetti
 ########################################################################################################################################
 #oggetto player
-player = Character("player.png",50,20,4,[xlim/2 - 25, ylim/2 - 25], [0,0])
+player = Character("player.png",50,20,4000,[xlim/2 - 25, ylim/2 - 25], [0,0])
 
 #oggetto bolognesi
 Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0],0)
@@ -298,18 +298,22 @@ while running:
         Meggiolaro.addtimer()
         #print(Proiettili)
         #print(Meggiolaro.timer)
-    if Meggiolaro.timer == Meggiolaro_spawn_value + 60:
-        Proiettili += (Meggiolaro.load_projectile(player.position))
-    if Meggiolaro.timer == Meggiolaro_spawn_value + 75:
-        Proiettili += (Meggiolaro.load_projectile(player.position))
-    if Meggiolaro.timer == Meggiolaro_spawn_value + 90:
-        Proiettili += (Meggiolaro.load_projectile(player.position))
+        if Meggiolaro.timer == 60:
+            Proiettili += (Meggiolaro.load_projectile(player.position))
+            print(Meggiolaro_spawn_value)
+        if Meggiolaro.timer == 75:
+            Proiettili += (Meggiolaro.load_projectile(player.position))
+            print(Meggiolaro_spawn_value)
+        if Meggiolaro.timer == 90:
+            Proiettili += (Meggiolaro.load_projectile(player.position))
+            print(Meggiolaro_spawn_value)
         #print(Proiettili)
-    if Meggiolaro.timer == 30*4: #30 è il numero di frame quindi 30*4 = 4 secondi
-        Meggiolaro.hp = 0
-        Meggiolaro.timer = 0
-        Meggiolaro_spawn_value = score + np.random.randint(10,30)
-    Meggiolaro.draw()
+        if Meggiolaro.timer == 30*4: #30 è il numero di frame quindi 30*4 = 4 secondi
+            Meggiolaro.hp = 0
+            
+            Meggiolaro.timer = 0
+            Meggiolaro_spawn_value = score + np.random.randint(10,30)
+        Meggiolaro.draw()
     ################################################################################################################################
 
     if len(Proiettili) >0:
