@@ -11,7 +11,7 @@ score= 0
 
 #funzione che calcola se sei colpito o meno 
 #attenzione il primo oggetto che si passa alla funzione è quello a cui si applica l'effetto
-def hit(obj1, obj2,key = None,t = None):
+def hit(obj1, obj2,key = None,t = None,damage = True):
     if obj1.hp > 0 and obj2.hp > 0:
         # aggiorna rect
         obj1.rect.topleft = obj1.position
@@ -20,7 +20,8 @@ def hit(obj1, obj2,key = None,t = None):
         #offset = (int(obj2.rect.x - obj1.rect.x), int(obj2.rect.y - obj1.rect.y))
         if obj1.mask.overlap(obj2.mask,(int(obj2.rect.x - obj1.rect.x), int(obj2.rect.y - obj1.rect.y))):
             if obj1.hittable: 
-                obj1.hp -= 1
+                if damage:
+                    obj1.hp -= 1
                 obj1.status_effects.append(status(30,'invincible')) #di default ti rende invincibile per mezzo secondo 
                 if (key is not None) and (t is not None):           #aggiunge un altro effetto se voluto
                     for i,j in zip(t,key):
@@ -156,6 +157,8 @@ class status:
             obj.speed = obj.base_speed/2
         elif self.key == 'invincible':
             obj.hittable = False
+        elif self.key == 'confusion':
+            self.speed == -self.speed
 
         self.duration -=1
         return self.duration > 0
@@ -323,7 +326,7 @@ while running:
     # draw
     Bolognesi.draw()
     #checking hit
-    hit(player, Bolognesi)
+    hit(player, Bolognesi, damage=False)
     if hit(Bolognesi, Bonati):
         score +=1
     ################################################################################################################################

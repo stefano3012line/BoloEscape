@@ -16,7 +16,7 @@ x = np.arange(len(y))
 plt.figure()
 plt.subplot(1,1,1)
 plt.plot(x,y)
-#plt.show()
+plt.show()
 
 a = [1,2,3]
 b=a.copy()
