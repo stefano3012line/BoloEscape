@@ -1,6 +1,7 @@
 import pygame as game
 import numpy as np
 import time
+import os
 #dimensioni schermo
 xlim,ylim=1280,720
 screen = game.display.set_mode((xlim,ylim))
@@ -177,7 +178,12 @@ player = Character("player.png",50,20,5,[xlim/2 - 25, ylim/2 - 25], [0,0])
 Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0],0)
 
 #oggetto bonati
-Bonati = Character("bonati_Claudio-Bonati.jpg",70,10,0,[0,0],[0,0])
+image = []
+with os.scandir('fotoClaudio') as d:
+    for e in d:
+        image.append('fotoClaudio/'+ e.name)
+print(image)
+Bonati = Character(np.random.choice(image),85,10,0,[0,0],[0,0])
 Bonati_spawn_value= 4
 
 #oggetto meggiolaro e lista dei proiettili
@@ -273,7 +279,7 @@ while running:
         Bonati.hp = 1
         Bonati_spawn_value = score + np.random.randint(7,13)
     if Bonati.hp ==1:
-        Bonati.direction = (last_n_position[0] - Bonati.position)/np.linalg.norm(last_n_position[0] - Bonati.position)
+        Bonati.direction = np.sign(last_n_position[0] - Bonati.position)#/np.linalg.norm(last_n_position[0] - Bonati.position)
     if Bonati.hp == 0:
         Bonati.position = np.array([0,0],dtype=float)
     Bonati.draw()
@@ -326,7 +332,7 @@ while running:
     # draw
     Bolognesi.draw()
     #checking hit
-    hit(player, Bolognesi, damage=False)
+    hit(player, Bolognesi)
     if hit(Bolognesi, Bonati):
         score +=1
     ################################################################################################################################

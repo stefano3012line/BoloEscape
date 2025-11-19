@@ -3,6 +3,8 @@ from pygame import mixer
 import numpy as np
 import time
 from matplotlib import pyplot as plt
+import os
+'''
 game.init()
 mixer.init()
 Bolo_passing =mixer.Sound('bolognesi-passing.mp3')
@@ -32,4 +34,9 @@ def rotate_Vector(V,theta):
 
 v1 = np.array((0,1))
 v2 = rotate_Vector(v1,np.pi/2)
-print(v2)
+print(v2)'''
+
+import os
+with os.scandir('fotoClaudio') as d:
+    for e in d:
+        print('fotoClaudio/'+ e.name)
