@@ -26,7 +26,8 @@ def hit(obj1, obj2,key = None,t = None,damage = True):
                 obj1.status_effects.append(status(30,'invincible')) #di default ti rende invincibile per mezzo secondo 
                 if (key is not None) and (t is not None):           #aggiunge un altro effetto se voluto
                     for i,j in zip(t,key):
-                        obj1.status_effects.append(status(i,j))
+                        obj1.status_effects.append(status(i,j,image=('fotoStatus/' + j + '.png'), size = 50))
+                        print('fotoStatus/' + j + 'png')
             if obj2.hittable: 
                 obj2.hp -= 1
             return True
@@ -53,6 +54,7 @@ class Character:
 
         # Instance variable
         self.hittable = True
+        self.confused = False
         self.hp = hp
         self._size = size
         self.speed = speed
@@ -91,8 +93,14 @@ class Character:
 
     def update_status_effects(self):
         self.hittable = True
+        self.confused = False
         self.speed = self.base_speed
         self.status_effects = [eff for eff in self.status_effects if eff.apply(self)]
+        n = 1
+        for k in self.status_effects:
+            if k.size is not None:
+                k.draw(xlim/3 + n*k.size,ylim - k.size)
+                n +=1
 '''
         expired = []
         for effect in self.status_effects:
@@ -147,22 +155,33 @@ class shooter(Character):
         return proj
 
 class status:
-    def __init__(self,duration,key):
+    def __init__(self,duration,key,image = None ,size =None):
         self.duration = duration
+        self.size = size
+        if image is not None:
+            self.image = game.transform.smoothscale(game.image.load(image), (self.size, self.size))
+        else: 
+            self.image = None
         self.key = key
     def apply(self,obj):
         if self.key == 'fire':
             if self.duration %30 == 0:
                 obj.hp -= 1
-        elif self.key == 'freeze':
+        elif self.key == 'slowness':
             obj.speed = obj.base_speed/2
         elif self.key == 'invincible':
             obj.hittable = False
         elif self.key == 'confusion':
-            self.speed == -self.speed
-
+            obj.confused = True
         self.duration -=1
         return self.duration > 0
+    def draw(self,xpos,ypos):
+        #if self.image is not None:
+        #print(self.image)
+        screen.blit(self.image,(xpos,ypos))
+
+
+    
 
 ########################################################################################################################################
 
@@ -171,19 +190,19 @@ class status:
 #lista degli status
 
 #oggetto player
-player = Character("player.png",50,20,5,[xlim/2 - 25, ylim/2 - 25], [0,0])
+player = Character("player.png",50,20,20,[xlim/2 - 25, ylim/2 - 25], [0,0])
 #player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
 #player.status_effects.append(status(90,'fire'))
 #oggetto bolognesi
 Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0],0)
 
 #oggetto bonati
-image = []
+Claudio_image = []
 with os.scandir('fotoClaudio') as d:
     for e in d:
-        image.append('fotoClaudio/'+ e.name)
-print(image)
-Bonati = Character(np.random.choice(image),85,10,0,[0,0],[0,0])
+        Claudio_image.append('fotoClaudio/'+ e.name)
+#print(image)
+Bonati = Character(np.random.choice(Claudio_image),85,10,0,[0,0],[0,0])
 Bonati_spawn_value= 4
 
 #oggetto meggiolaro e lista dei proiettili
@@ -199,6 +218,10 @@ heart = game.transform.smoothscale(game.image.load("massimino.png"),(heart_size,
 jumpscare=game.image.load('bolo_jumpscare.jpg')
 jumpscare=game.transform.smoothscale(jumpscare,(xlim,ylim))
 event_jumpscare= np.random.randint(5,10)
+
+#lista status effect immage
+
+
 #######################################################################################################################################
 
 #lista in cui salviamo le posizioni del player serve per bonati e servirà anche per meggiolaro e lamanna
@@ -243,26 +266,45 @@ while running:
     player.direction = np.array([0,0])
     direction_pressed = [True,True]
     #player movement
-    if game.key.get_pressed()[game.K_s]and player.position[1]<= ylim - (player.size+player.speed):
-        player.direction[1] = 1
-        direction_pressed[1] = not direction_pressed[1] 
-    if game.key.get_pressed()[game.K_w]and player.position[1]>= player.speed:
-        player.direction[1] = -1
-        direction_pressed[1] = not direction_pressed[1]
-    if game.key.get_pressed()[game.K_d] and player.position[0]<= xlim -(player.size+player.speed):
-        player.direction[0] = 1
-        direction_pressed[0] = not direction_pressed[0]
-    if game.key.get_pressed()[game.K_a] and player.position[0] >= player.speed:
-        player.direction[0] = -1
-        direction_pressed[0] = not direction_pressed[0]
-    if direction_pressed[0]:
-        player.direction[0] = 0
-    if direction_pressed[1]:
-        player.direction[1] = 0
 
-    
-    
+    if player.confused == False:
+        if game.key.get_pressed()[game.K_s]and player.position[1]<= ylim - (player.size + player.speed):
+            player.direction[1] = 1
+            direction_pressed[1] = not direction_pressed[1] 
+        if game.key.get_pressed()[game.K_w]and player.position[1]>= player.speed:
+            player.direction[1] = -1
+            direction_pressed[1] = not direction_pressed[1]
+        if game.key.get_pressed()[game.K_d] and player.position[0]<= xlim -(player.size+ player.speed):
+            player.direction[0] = 1
+            direction_pressed[0] = not direction_pressed[0]
+        if game.key.get_pressed()[game.K_a] and player.position[0] >= player.speed:
+            player.direction[0] = -1
+            direction_pressed[0] = not direction_pressed[0]
+        if direction_pressed[0]:
+            player.direction[0] = 0
+        if direction_pressed[1]:
+            player.direction[1] = 0
+    elif player.confused == True:
+        if game.key.get_pressed()[game.K_w]and player.position[1]<= ylim - (player.size + player.speed):
+            player.direction[1] = 1
+            direction_pressed[1] = not direction_pressed[1] 
+        if game.key.get_pressed()[game.K_s]and player.position[1]>= player.speed:
+            player.direction[1] = -1
+            direction_pressed[1] = not direction_pressed[1]
+        if game.key.get_pressed()[game.K_a] and player.position[0]<= xlim -(player.size+ player.speed):
+            player.direction[0] = 1
+            direction_pressed[0] = not direction_pressed[0]
+        if game.key.get_pressed()[game.K_d] and player.position[0] >= player.speed:
+            player.direction[0] = -1
+            direction_pressed[0] = not direction_pressed[0]
+        if direction_pressed[0]:
+            player.direction[0] = 0
+        if direction_pressed[1]:
+            player.direction[1] = 0
+
+
     player.update_position()
+
     last_n_position.append(player.position)
     if len(last_n_position) > 20:
         last_n_position = last_n_position[1:]
@@ -374,7 +416,7 @@ while running:
             i.update_position()
             #print(i.direction)
             i.draw()
-            if hit(player,i,['freeze'],[60]) or outofbound(i,xlim,ylim):
+            if hit(player,i,['confusion'],[120]) or outofbound(i,xlim,ylim):
                 Proiettili.remove(i)
     
     ################################################################################################################################
