@@ -129,7 +129,7 @@ class shooter(Character):
 #creazione degli oggetti
 ########################################################################################################################################
 #oggetto player
-player = Character("player.png",50,20,4000,[xlim/2 - 25, ylim/2 - 25], [0,0])
+player = Character("player.png",50,20,4,[xlim/2 - 25, ylim/2 - 25], [0,0])
 
 #oggetto bolognesi
 Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0],0)
