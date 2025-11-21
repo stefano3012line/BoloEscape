@@ -157,7 +157,7 @@ class shooter(Character):
         if self.hp > 0:
             self.timer +=1
     #funzione per caricare i proiettili in una lista
-    def load_projectile(self,point,n): #n è il numero di proiettili da sparare dentro lo spread
+    def load_projectile(self,point,Class,n): #n è il numero di proiettili da sparare dentro lo spread
         working_position = self.position.copy() +(0,self.size/2)  #+ self.size/2 serve solo a far sparare dal punto della pistola 
                                                                   #(potrei sostituirla con il centro o renderlo un parametro esterno per generalizzarlo ad altri personaggi)
         V1 = (point - working_position)/np.linalg.norm(point - working_position)
@@ -166,7 +166,7 @@ class shooter(Character):
             directions.append(rotate_Vector(V1.copy(),i))
         #print(direction)
         for k in directions:
-           self.projectiles.append(Character('heart.png',40,50,1,working_position,k.copy())) 
+           self.projectiles.append(Class('heart.png',40,50,1,working_position,k.copy())) 
         #return proj #ho effettivamente bisogno di returnarla? no potrebbe essere un array contenuto nella classe e avrebbe più senso
 
 class status:
@@ -424,13 +424,14 @@ while running:
         #print(Proiettili)
         #print(Meggiolaro.timer)
         if Meggiolaro.timer == 60:
-            Meggiolaro.load_projectile(player.position,3)  #possiamo settare quanti proiettili spara ogni volta  in questo caso 3
+            Meggiolaro.load_projectile(player.position,Character,3)  #possiamo settare quanti proiettili spara ogni volta  in questo caso 3 
+                                                                     #bisogna dire la classe di proiettli che voglio usare
             #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 75:
-            Meggiolaro.load_projectile(player.position,2)
+            Meggiolaro.load_projectile(player.position,Character,2)
             #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 90:
-            Meggiolaro.load_projectile(player.position,3)
+            Meggiolaro.load_projectile(player.position,Character,3)
             #print(Meggiolaro_spawn_value)
         
         #print(Proiettili) # per controllare che vengano rimossi correttamente
@@ -440,7 +441,7 @@ while running:
             Meggiolaro_spawn_value = score + 15
         Meggiolaro.draw()
     ################################################################################################################################
-
+    #routine di sparo
     if len(Meggiolaro.projectiles) >0:
         for i in Meggiolaro.projectiles:
             i.update_position()
