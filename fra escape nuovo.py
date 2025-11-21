@@ -27,7 +27,7 @@ def hit(obj1, obj2,key = None,t = None,damage = True):
                 if (key is not None) and (t is not None):           #aggiunge un altro effetto se voluto
                     for i,j in zip(t,key):
                         obj1.status_effects.append(status(i,j,image=('fotoStatus/' + j + '.png'), size = 50))
-                        print('fotoStatus/' + j + 'png')
+                        #print('fotoStatus/' + j + 'png')
             if obj2.hittable: 
                 obj2.hp -= 1
             return True
@@ -92,14 +92,14 @@ class Character:
             screen.blit(self.image, self.position)
 
     def update_status_effects(self):
-        self.hittable = True
-        self.confused = False
-        self.speed = self.base_speed
+        #self.hittable = True
+        #self.confused = False
+        #self.speed = self.base_speed
         self.status_effects = [eff for eff in self.status_effects if eff.apply(self)]
         n = 1
         for k in self.status_effects:
             if k.size is not None:
-                k.draw(xlim/3 + n*k.size,ylim - k.size)
+                k.draw(5 + n*k.size,ylim - k.size)
                 n +=1
 '''
         expired = []
@@ -174,7 +174,14 @@ class status:
         elif self.key == 'confusion':
             obj.confused = True
         self.duration -=1
-        return self.duration > 0
+
+        if self.duration > 0:
+            return True
+        if self.duration <= 0:
+            obj.hittable = True
+            obj.speed = obj.base_speed
+            obj.confused = False
+            return False
     def draw(self,xpos,ypos):
         #if self.image is not None:
         #print(self.image)
@@ -190,7 +197,7 @@ class status:
 #lista degli status
 
 #oggetto player
-player = Character("player.png",50,20,20,[xlim/2 - 25, ylim/2 - 25], [0,0])
+player = Character("player.png",50,20,7,[xlim/2 - 25, ylim/2 - 25], [0,0])
 #player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
 #player.status_effects.append(status(90,'fire'))
 #oggetto bolognesi
@@ -267,7 +274,7 @@ while running:
     direction_pressed = [True,True]
     #player movement
 
-    if player.confused == False:
+    if not(player.confused):
         if game.key.get_pressed()[game.K_s]and player.position[1]<= ylim - (player.size + player.speed):
             player.direction[1] = 1
             direction_pressed[1] = not direction_pressed[1] 
@@ -284,7 +291,8 @@ while running:
             player.direction[0] = 0
         if direction_pressed[1]:
             player.direction[1] = 0
-    elif player.confused == True:
+
+    elif player.confused:
         if game.key.get_pressed()[game.K_w]and player.position[1]<= ylim - (player.size + player.speed):
             player.direction[1] = 1
             direction_pressed[1] = not direction_pressed[1] 
@@ -395,13 +403,13 @@ while running:
         #print(Meggiolaro.timer)
         if Meggiolaro.timer == 60:
             Proiettili += (Meggiolaro.load_projectile(player.position))
-            print(Meggiolaro_spawn_value)
+            #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 75:
             Proiettili += (Meggiolaro.load_projectile(player.position))
-            print(Meggiolaro_spawn_value)
+            #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 90:
             Proiettili += (Meggiolaro.load_projectile(player.position))
-            print(Meggiolaro_spawn_value)
+            #print(Meggiolaro_spawn_value)
         #print(Proiettili)
         if Meggiolaro.timer == 30*4: #30 è il numero di frame quindi 30*4 = 4 secondi
             Meggiolaro.hp = 0
@@ -461,7 +469,7 @@ time.sleep(1)
 game.quit()
 
 
-#add shooting meggio (in corso)
+#add projectile types
 #add pause
 #play audio
 #adattare la size schermo
