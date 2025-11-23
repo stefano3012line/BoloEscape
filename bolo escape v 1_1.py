@@ -52,22 +52,26 @@ def outofbound(obj,x,y):
 class Character:
     def __init__(self, image, size, speed,hp, position, direction):
 
-        # Instance variable
-        self.hittable = True
-        self.confused = False
+        #instance variable
         self.hp = hp
         self._size = size
         self.speed = speed
         self.base_speed = speed
+        #movement variables
         self.position = np.array(position, dtype=float)
         self.direction = np.array(direction, dtype=float)
-        # Load and scale the image
+        #status variables
+        self.status_effects =[]
+        self.hittable = True
+        self.confused = False
+        # Load and scale the image and mask it
         self.image = game.transform.smoothscale(game.image.load(image), (self.size, self.size))
         self.rect = self.image.get_rect()
         self.mask = game.mask.from_surface(self.image)
         self.rect.topleft = self.position
-        #status effects
-        self.status_effects = []
+                                 ######### definzione dei metodi ##########
+
+    #riaggiornare la size dentro il dizionario per ridefinire anche mask e rettangolo in automatico
     @property
     def size(self):
         return self._size
@@ -77,39 +81,43 @@ class Character:
         self._size = new
         self.image = game.transform.smoothscale(self.image, (new, new))
     
+    #centro dell'oggetto (usato in passato per calcolare le hitbox ma ora non serve più)
     @property   
     def centre(self):
         #Return the center point of the character
         return self.position + np.array([self.size / 2, self.size / 2])
+    
+    #usata per muovere l'oggetto (non so perché non l'ho semplicemente chiamato move)
     def update_position(self):
-        #Move the character based on direction and speed
-        if self.hp> 0:
+        if self.hp> 0: #controllo che l'hp dell'oggetto sia maggiore di zero se no si ferma (boh non so se è necessario ci sta un botto di double check in sto codice)
             self.position += self.direction * self.speed
             self.rect.topleft = self.position
+    
+    #disegna l'oggetto nel punto in cui si trova
     def draw(self):
-        #Draw the character on the given screen.
         if self.hp >0:
             screen.blit(self.image, self.position)
 
+    #controlla se ci sono status effect in caso li applico deapplico quelli scaduti e li rimuovo dalla lista di status effect
     def update_status_effects(self):
-        #self.hittable = True
-        #self.confused = False
-        #self.speed = self.base_speed
-        self.status_effects = [eff for eff in self.status_effects if eff.apply(self)]
+
+        #disegno lo status effect se ha un immagine e una dimensione (checko solo la dimensione quind se gli dai quello e non l'immagine sono cazzi)
         n = 1
         for k in self.status_effects:
             if k.size is not None:
                 k.draw(5 + n*k.size,ylim - k.size)
                 n +=1
-'''
+        
+        #per questioni di come pyton conta gli indici tocca creare una tabella temporanea per gli effetti scaduti
         expired = []
-        for effect in self.status_effects:
-            if effect.apply(self):     # returns False if expired
-                expired.append(effect)
+        for eff in self.status_effects:
+            if not(eff.apply(self)): #applico gli effetti quando controllo se sono scaduti    # returns False if expired
+                expired.append(eff)
 
         # remove ended effects
         for e in expired:
-            self.status_effects.remove(e)'''
+            e.deapply(self)  #deapplico gli effetti scaduti
+            self.status_effects.remove(e)  #rimuovo gli effetti scaduti dalla lista di effetti
 
 class Stefano(Character):
     def __init__(self, image, size, speed,hp, position, direction, spawn):
@@ -117,6 +125,8 @@ class Stefano(Character):
         self.spawn = spawn
     def update_position(self):
         #Move the character based on direction and speed
+        #non controllo se sia vivo o meno perché per farlo spawnare ho bisogno che bolo esca dallo schermo quindi in reltà continua a muoversi anche da morto
+        #il motivo è che così in automatico dopo che ti colpisce hai un attimo di pausa prima che un altro bolognesi spawni (il tempo che quello vecchio esca dallo schermo)
         if self.spawn == 0: #north
             self.direction = np.array([0, 1], dtype=float)
         elif self.spawn == 1: #south
@@ -127,32 +137,37 @@ class Stefano(Character):
             self.direction = np.array([1, 0], dtype=float)
         self.position += self.direction * self.speed/(5*np.sqrt(Bolognesi.size))
         self.rect.topleft = self.position
+    
+    #dato che la size cambia devo cambiare anche il rettangolo altrimenti le hitbox si sfasano
     def update_mask(self):
         self.rect = self.image.get_rect()
         self.mask = game.mask.from_surface(self.image)
+
+    #accellera bolognesi ogni volta che esce dallo schermo
     def accelerate(self):
-        #accellera bolognesi ogni volta che esce dallo schermo
         self.speed += int((Bolognesi.speed/(4*score+1))) 
 
 class shooter(Character):
     def __init__(self, image, size, speed,hp, position, direction,timer,spread):
         super().__init__(image,size,speed,hp,position,direction)
-        self.timer= timer
+        self.timer= timer    #contatore (gli shooter vogliamo che despawnino indipendentemente dalla vita o meno)
         self.spread = spread #ampiezza angolare dello sparo (in gradi)
+        self.projectiles =[]
     def addtimer(self):
         if self.hp > 0:
             self.timer +=1
-    def load_projectile(self,point):
-        working_position = self.position.copy() +(0,self.size/2)  #+ self.size/2 serve solo a far sparare dal punto della pistola
+    #funzione per caricare i proiettili in una lista
+    def load_projectile(self,point,Class,n): #n è il numero di proiettili da sparare dentro lo spread
+        working_position = self.position.copy() +(0,self.size/2)  #+ self.size/2 serve solo a far sparare dal punto della pistola 
+                                                                  #(potrei sostituirla con il centro o renderlo un parametro esterno per generalizzarlo ad altri personaggi)
         V1 = (point - working_position)/np.linalg.norm(point - working_position)
-        V2 = rotate_Vector(V1.copy(),self.spread/2)
-        V3 = rotate_Vector(V1.copy(),-self.spread/2)
-        direction = [V1,V2,V3] 
+        directions =[]
+        for i in np.linspace(-self.spread/2,self.spread/2,n):
+            directions.append(rotate_Vector(V1.copy(),i))
         #print(direction)
-        proj = []
-        for i in direction:
-           proj.append(Character('heart.png',40,50,1,working_position,i.copy())) #+ self.size/2 serve solo a far sparare dal punto della pistola
-        return proj
+        for k in directions:
+           self.projectiles.append(Class('heart.png',40,50,1,working_position,k.copy())) 
+        #return proj #ho effettivamente bisogno di returnarla? no potrebbe essere un array contenuto nella classe e avrebbe più senso
 
 class status:
     def __init__(self,duration,key,image = None ,size =None):
@@ -175,13 +190,16 @@ class status:
             obj.confused = True
         self.duration -=1
 
-        if self.duration > 0:
-            return True
-        if self.duration <= 0:
-            obj.hittable = True
+        return self.duration > 0 #True se è in vigore 
+    def deapply(self,obj):
+
+        if self.key == 'slowness':
             obj.speed = obj.base_speed
+        elif self.key == 'invincible':
+            obj.hittable = True
+        elif self.key == 'confusion':
             obj.confused = False
-            return False
+        return False #serve per la list comprension
     def draw(self,xpos,ypos):
         #if self.image is not None:
         #print(self.image)
@@ -209,13 +227,13 @@ with os.scandir('fotoClaudio') as d:
     for e in d:
         Claudio_image.append('fotoClaudio/'+ e.name)
 #print(image)
-Bonati = Character(np.random.choice(Claudio_image),85,7,0,[0,0],[0,0])
+Bonati = Character(np.random.choice(Claudio_image),85,10,0,[0,0],[0,0])
 Bonati_spawn_value= 4
 
 #oggetto meggiolaro e lista dei proiettili
 Meggiolaro = shooter("meggioladro.png",200,0,0,[xlim -200,ylim -200],[0,0],0,30)
 Meggiolaro_spawn_value= 2
-Proiettili = []
+#Proiettili = []
 
 #immaginie e size cuori
 heart_size = 60
@@ -259,7 +277,7 @@ while running:
         #event_jumpscare+=np.random.randint(5,15)
         #score+=1
     ###################################################################################################################
-    #effects
+    
 
     ###################################################################################################################
 
@@ -267,7 +285,11 @@ while running:
 
     ###################################################################################################################
     #disegno il player
+
+    #la funzione update_status effect li applica e rimuove in automatico perché siamo persone per bene
     player.update_status_effects()
+
+
     player.draw()
     #si ridefinisce la posizione ogni frame
     player.direction = np.array([0,0])
@@ -402,31 +424,33 @@ while running:
         #print(Proiettili)
         #print(Meggiolaro.timer)
         if Meggiolaro.timer == 60:
-            Proiettili += (Meggiolaro.load_projectile(player.position))
+            Meggiolaro.load_projectile(player.position,Character,3)  #possiamo settare quanti proiettili spara ogni volta  in questo caso 3 
+                                                                     #bisogna dire la classe di proiettli che voglio usare
             #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 75:
-            Proiettili += (Meggiolaro.load_projectile(player.position))
+            Meggiolaro.load_projectile(player.position,Character,2)
             #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 90:
-            Proiettili += (Meggiolaro.load_projectile(player.position))
+            Meggiolaro.load_projectile(player.position,Character,3)
             #print(Meggiolaro_spawn_value)
-        #print(Proiettili)
+        
+        #print(Proiettili) # per controllare che vengano rimossi correttamente
         if Meggiolaro.timer == 30*4: #30 è il numero di frame quindi 30*4 = 4 secondi
             Meggiolaro.hp = 0
-            
             Meggiolaro.timer = 0
             Meggiolaro_spawn_value = score + 15
         Meggiolaro.draw()
     ################################################################################################################################
-
-    if len(Proiettili) >0:
-        for i in Proiettili:
+    #routine di sparo
+    if len(Meggiolaro.projectiles) >0:
+        for i in Meggiolaro.projectiles:
             i.update_position()
             #print(i.direction)
             i.draw()
             if hit(player,i,['confusion'],[120]) or outofbound(i,xlim,ylim):
-                Proiettili.remove(i)
-    
+                Meggiolaro.projectiles.remove(i)
+
+    #print(Meggiolaro.projectiles) #per controllare che i proiettili vengano effettivamente rimossi come devono
     ################################################################################################################################
 
 
@@ -474,3 +498,4 @@ game.quit()
 #play audio
 #adattare la size schermo
 #add tredicucci
+#rework claudio
