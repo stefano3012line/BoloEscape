@@ -3,6 +3,7 @@ import time
 import os
 import pygame as game
 import numpy as np
+import itertools as iter 
 #dimensioni schermo
 xlim,ylim=1280,720
 screen = game.display.set_mode((xlim,ylim))
@@ -13,7 +14,7 @@ score= 0
 
 #funzione che calcola se sei colpito o meno 
 #attenzione il primo oggetto che si passa alla funzione è quello a cui si applica l'effetto
-def hit(obj1, obj2,key = None,t = None,damage = True):
+def hit(obj1, obj2,key=None,t=None,damage=True, both=False):
     if obj1.hp > 0 and obj2.hp > 0:
         # aggiorna rect
         obj1.rect.topleft = obj1.position
@@ -25,13 +26,19 @@ def hit(obj1, obj2,key = None,t = None,damage = True):
                 if damage:
                     obj1.hp -= 1
                 obj1.status_effects.append(status(30,'invincible')) #di default ti rende invincibile per mezzo secondo 
-                if t is not None:           #aggiunge un altro effetto se voluto
+                if t is not None:        #aggiunge un altro effetto se voluto
                     if key is not None:
                         for i,j in zip(t,key):
                             obj1.status_effects.append(status(i,j,image=('fotoStatus/' + j + '.png'), size = 50))
+                            print('bolo effettuato')
+                            if both:
+                                obj2.status_effects.append(status(i,j))
                     else: 
                         for i,j in zip(t,obj2.type):
                             obj1.status_effects.append(status(i,j,image=('fotoStatus/' + j + '.png'), size = 50))
+                            if both:
+                                obj2.status_effects.append(status(i,j))
+
 
             
                         #print('fotoStatus/' + j + 'png')
@@ -72,7 +79,7 @@ def outofbound(obj,x,y):
 #########################################################################################################################################
 
 class Character:
-    def __init__(self, image, size, speed,hp, position, direction):
+    def __init__(self, image, size, speed,hp, position, direction, aura_frame = 0):
 
         #instance variable
         self.hp = hp
@@ -92,6 +99,8 @@ class Character:
         self.rect = self.image.get_rect()
         self.mask = game.mask.from_surface(self.image)
         self.rect.topleft = self.position
+        #frame per aura effects
+        self.aura_frame = aura_frame
                                  ######### definzione dei metodi ##########
 
     #riaggiornare la size dentro il dizionario per ridefinire anche mask e rettangolo in automatico
@@ -125,21 +134,35 @@ class Character:
         if self.hp >0:
             screen.blit(self.image, self.position)
 
+    def aura(self,pic,dim,frames): #gli diamo il frame dall'esterno così posso controllarlo dentro il while frame per frame ?
+        if self.hp > 0:
+            im = game.image.load(pic)
+            dim_array = np.linspace(self.size,dim,frames)
+            self.aura_frame +=1
+            if self.aura_frame >= frames:
+                self.aura_frame = 0
+            a = game.transform.smoothscale(im, (dim_array[self.aura_frame],dim_array[self.aura_frame]))
+            screen.blit(a,self.centre -0.5*dim_array[self.aura_frame])
+
+
+
     #controlla se ci sono status effect in caso li applico deapplico quelli scaduti e li rimuovo dalla lista di status effect
-    def update_status_effects(self):
+    def update_status_effects(self,draw=False):
 
         #disegno lo status effect se ha un immagine e una dimensione (checko solo la dimensione quind se gli dai quello e non l'immagine sono cazzi)
-        n = 1
-        for k in self.status_effects:
-            if k.size is not None:
-                k.draw(5 + n*k.size,ylim - k.size)
-                n +=1
+        n = 0
+        if draw:
+            for k in self.status_effects:
+                if k.key is not('invincible'):
+                    k.draw(5 + n*k.size,ylim - k.size)
+                    n +=1
         
         #per questioni di come pyton conta gli indici tocca creare una tabella temporanea per gli effetti scaduti
         expired = []
         for eff in self.status_effects:
             if not(eff.apply(self)): #applico gli effetti quando controllo se sono scaduti    # returns False if expired
                 expired.append(eff)
+                #print(eff)
 
         # remove ended effects
         for e in expired:
@@ -172,7 +195,8 @@ class Stefano(Character):
 
     #accellera bolognesi ogni volta che esce dallo schermo
     def accelerate(self):
-        self.speed += int((Bolognesi.speed/(4*score+1))) 
+        self.speed += int((Bolognesi.speed/(4*score+1)))
+        self.base_speed += int((Bolognesi.base_speed/(4*score+1)))  
 
 class shooter(Character):
     def __init__(self, image, size, speed,hp, position, direction,timer,spread):
@@ -329,7 +353,7 @@ while running:
     #disegno il player
 
     #la funzione update_status effect li applica e rimuove in automatico perché siamo persone per bene
-    player.update_status_effects()
+    player.update_status_effects(draw=True)
 
 
     player.draw()
@@ -421,6 +445,7 @@ while running:
     if Lamanna.hp == 0:
         Lamanna.position = [0,0]
     Lamanna.draw()
+    Lamanna.aura('heal.png',3*Lamanna.size, 35)
     heal(player,Lamanna,1)
     #####################################################################################################################
 
@@ -431,6 +456,7 @@ while running:
                                                   #BOLOGNESI#
 
     #####################################################################################################################
+    Bolognesi.update_status_effects() #per ora non decommentare perché ci sono problemi se bolo viene slowato
 
     # check if he is off-screen → RESPAWN
     #ho tolto un due
@@ -507,7 +533,7 @@ while running:
             i.update_position()
             #print(i.direction)
             i.draw()
-            if outofbound(i,xlim,ylim) or hit(player,i,t=[120]) or hit(Bolognesi,i,damage= False):
+            if outofbound(i,xlim,ylim) or hit(player,i,t=[120]) or hit(Bolognesi,i,t=[30],damage= False):
                 Meggiolaro.projectiles.remove(i)
 
     #print(Meggiolaro.projectiles) #per controllare che i proiettili vengano effettivamente rimossi come devono
