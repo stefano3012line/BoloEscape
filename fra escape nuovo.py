@@ -456,7 +456,7 @@ while running:
                                                   #BOLOGNESI#
 
     #####################################################################################################################
-    Bolognesi.update_status_effects() #per ora non decommentare perché ci sono problemi se bolo viene slowato
+    #Bolognesi.update_status_effects() #per ora non decommentare perché ci sono problemi se bolo viene slowato
 
     # check if he is off-screen → RESPAWN
     #ho tolto un due
