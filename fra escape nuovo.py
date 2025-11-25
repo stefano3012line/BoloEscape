@@ -153,7 +153,7 @@ class Character:
         n = 0
         if draw:
             for k in self.status_effects:
-                if k.key is not('invincible'):
+                if k.key != 'invincible':
                     k.draw(5 + n*k.size,ylim - k.size)
                     n +=1
         
@@ -290,7 +290,7 @@ with os.scandir('fotoClaudio') as d:
     for e in d:
         Claudio_image.append('fotoClaudio/'+ e.name)
 #print(image)
-Bonati = Character(np.random.choice(Claudio_image),85,10,0,[0,0],[0,0])
+Bonati = Character(np.random.choice(Claudio_image),85,15,0,[0,0],[0,0])
 Bonati_spawn_value= 4
 
 #oggetto meggiolaro e lista dei proiettili
@@ -417,7 +417,7 @@ while running:
         Bonati_spawn_value = score + np.random.randint(7,13) 
         Bonati.hp = 1
     if Bonati.hp == 1:
-        Bonati.direction = np.sign(last_n_position[0] - Bonati.position)#/np.linalg.norm(last_n_position[0] - Bonati.position)
+        Bonati.direction = np.sign(last_n_position[0] - Bonati.position)/np.linalg.norm(np.sign(last_n_position[0] - Bonati.position))
     if Bonati.hp == 0:
         angles = [[0,0],[0,ylim],[xlim,0],[xlim,ylim]]
         Bonati.position = np.array(angles[np.random.randint(0,4)],dtype=float) #per farlo spawnare in punti randomici #randint esclude l'upperbound
