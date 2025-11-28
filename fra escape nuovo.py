@@ -304,7 +304,7 @@ class status:
 
 #oggetto player
 player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
-#player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
+player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
 #player.status_effects.append(status(90,'fire'))
 #oggetto bolognesi
 Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0], sound =['audios/bolognesi-passing (mp3cut.net).mp3'],volume = 0.3, spawn=0)
@@ -320,7 +320,7 @@ Bonati = Character(np.random.choice(Claudio_image),85,15,0,[0,0],[0,0])
 Bonati_spawn_value= 4
 
 #oggetto meggiolaro e lista dei proiettili
-Meggiolaro = shooter("meggioladro.png",200,0,0,[xlim -200,ylim -200],[0,0],0,30)
+Meggiolaro = shooter("meggioladro.png",200,0,0,[xlim -200,ylim -200],[0,0],0,30, sound=['audios/meggio shooting.mp3'],volume=1)
 Meggiolaro_spawn_value = 2
 
 negative_stauts_list = ['confusion','slowness','enlarge'] #se si vuole randomizzare sulla scelta degli effetti si usa questa lista
@@ -366,9 +366,10 @@ while running:
     if event_jumpscare == score:
         screen.blit(jumpscare,(0,0))
         game.display.update()
-        time.sleep(0.3)
+        game.time.delay(300)
+        #time.sleep(0.3)
         event_jumpscare+=np.random.randint(5,15)
-        score+=1
+        #score+=1
     ###################################################################################################################
     
 
@@ -443,6 +444,7 @@ while running:
     if int(score) == Bonati_spawn_value:
         Bonati_spawn_value = score + np.random.randint(7,13) 
         Bonati.hp = 1
+        print('Bonati',score, Bonati_spawn_value)
     if Bonati.hp == 1:
         Bonati.direction = np.sign(last_n_position[0] - Bonati.position)/np.linalg.norm(np.sign(last_n_position[0] - Bonati.position))
     if Bonati.hp == 0:
@@ -544,12 +546,15 @@ while running:
         #print(Meggiolaro.timer)
         if Meggiolaro.timer == 60:
             Meggiolaro.load_projectile(player.position,2)  #possiamo settare quanti proiettili spara ogni volta  in questo caso 2
+            Meggiolaro.soundon()
             #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 75:
             Meggiolaro.load_projectile(player.position,3)
+            Meggiolaro.soundon()
             #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 90:
             Meggiolaro.load_projectile(player.position,4)
+            Meggiolaro.soundon()
             #print(Meggiolaro_spawn_value)
         
         #print(Proiettili) # per controllare che vengano rimossi correttamente
