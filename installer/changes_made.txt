@@ -1,0 +1,18 @@
+moved all objects and functions to a different file
+
+removed all global variables usage:
+    - a function doesn't read "score" willy nilly, it is passed as an argument to the function
+    - the draw functions don't just call screen.blit, the screen is passed to them as an argument
+    - shooter.load_projectile doesn't read "negative_status", it reads self.posssible_statuses which is initialized along with the object
+
+I understand why it was done but now projectile does not just calls heart, when load_projectile is passed amongst its arguments is the sprite the projectiles will use, so its more convenient
+
+
+I AM ACTUALLY GONNA #$£@&% MURDER YOU PEOPLE IF YOU DONT START *ç%^&%$ PUTTING SPACES AFTER COMMAS IN FUNCTION'S ARGUMENTS GODDAMMIT
+I ACTUALLY PUT PROOF IN THIS VERY FOLDER, PLEASE TELL ME WHICH IS MORE READABLE YOU FOOLS, YOU ABSOLUTE BUFFOONS
+
+AND DON'T PUT SPACES IN FILENAMES ITS JUST PLAIN WRONG AND MAKES THEM SO MUCH HARDER TO USE
+
+
+consiglio mmolto caldo:
+    NIENTE STATUS LIST NEL PLAYER, SI FA PER OGNI EFFETTO UN BOOLEANO, IS_CONFUSED, IS_ONFIRE, IS_INVINCIBLE, PERCHè FATTO CON UNA LISTA è UN CASINO DA TRACCIARE OGNI VOLTA
