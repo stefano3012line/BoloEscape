@@ -288,6 +288,7 @@ player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
 #player.status_effects.append(status(90,'fire'))
 #oggetto bolognesi
 Bolo_passing =mixer.Sound('audios/bolognesi-passing.mp3')
+Bolo_passing.set_volume(0.3)
 Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0],0)
 
 #oggetto bonati
