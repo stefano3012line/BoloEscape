@@ -143,14 +143,20 @@ class Character:
         if self.hp >0:
             screen.blit(self.image, self.position)
 
-    def soundeff(self,n = 0): #suona l'ennesima track
+    def soundon(self,n = 0): #suona l'ennesima track
             if self.sound is not None:
                 if type(self.volume) is list:
                     v = self.volume[n]
                 else:
                     v = self.volume
                 self.sound[n].set_volume(v)
+    
+            
             self.sound[n].play()
+
+    def soundoff(self,n=0):
+            if self.hp<=0:
+                self.sound[n].stop()
 
 
     def aura(self,pic,dim,frames): #gli diamo il frame dall'esterno così posso controllarlo dentro il while frame per frame ?
@@ -301,7 +307,7 @@ player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
 #player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
 #player.status_effects.append(status(90,'fire'))
 #oggetto bolognesi
-Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0], sound =['audios/bolognesi-passing.mp3'],volume = 0.3, spawn=0)
+Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0], sound =['audios/bolognesi-passing (mp3cut.net).mp3'],volume = 0.3, spawn=0)
 #Bolo_passing = mixer.Sound('audios/bolognesi-passing.mp3')
 #Bolo_passing.set_volume(0.3)
 #oggetto bonati
@@ -483,7 +489,7 @@ while running:
     #ho tolto un due
     if outofbound(Bolognesi,xlim,ylim):
         Bolognesi.accelerate()
-        Bolognesi.soundeff(0)
+    
         #print(Bolognesi.speed)
         score+=1
    
@@ -494,6 +500,8 @@ while running:
         Bolognesi.size = np.random.randint(50, 300)
         Bolognesi.update_mask()
         Bolognesi.hp = 1
+        Bolognesi.soundon()
+
     
 
     # set initial spawn position
@@ -507,16 +515,17 @@ while running:
             Bolognesi.position = np.array([-Bolognesi.size,np.random.randint(0, ylim-Bolognesi.size)], dtype=float)
 
     #print("Spawn =", Bolognesi.spawn,"| Direction =", Bolognesi.direction,"| Pos =", Bolognesi.position,"| Size =", Bolognesi.size "|speed =" Bolognesi.speed)
-
     # move Bolognesi
     Bolognesi.update_position()
     # draw
     Bolognesi.draw()
     #checking hit
-    hit(player, Bolognesi)
+    if hit(player, Bolognesi):
+        Bolognesi.soundoff()
     hit(Bolognesi,Lamanna,damage = False)
     if hit(Bolognesi, Bonati):
         score +=1
+        Bolognesi.soundoff()
     ################################################################################################################################
 
 
