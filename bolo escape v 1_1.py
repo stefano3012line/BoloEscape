@@ -302,7 +302,7 @@ Bonati_spawn_value= 4
 #oggetto meggiolaro e lista dei proiettili
 Meggiolaro = shooter("meggioladro.png",200,0,0,[xlim -200,ylim -200],[0,0],0,30)
 Meggiolaro_spawn_value = 2
-
+Meggiolaro_shot_sound=mixer.Sound('audios/meggio shooting.mp3')
 negative_stauts_list = ['confusion','slowness','enlarge'] #se si vuole randomizzare sulla scelta degli effetti si usa questa lista
 #oggetto Lamanna
 
@@ -520,12 +520,15 @@ while running:
         #print(Meggiolaro.timer)
         if Meggiolaro.timer == 60:
             Meggiolaro.load_projectile(player.position,2)  #possiamo settare quanti proiettili spara ogni volta  in questo caso 2
+            Meggiolaro_shot_sound.play()
             #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 75:
             Meggiolaro.load_projectile(player.position,3)
+            Meggiolaro_shot_sound.play()
             #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 90:
             Meggiolaro.load_projectile(player.position,4)
+            Meggiolaro_shot_sound.play()
             #print(Meggiolaro_spawn_value)
         
         #print(Proiettili) # per controllare che vengano rimossi correttamente
