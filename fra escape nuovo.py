@@ -4,6 +4,10 @@ import os
 import pygame as game
 import numpy as np
 import itertools as iter 
+from pygame import mixer
+
+mixer.init()
+
 #dimensioni schermo
 xlim,ylim=1280,720
 screen = game.display.set_mode((xlim,ylim))
@@ -11,6 +15,7 @@ clock = game.time.Clock()
 background=game.image.load('unipipi.jpeg')
 background=game.transform.smoothscale(background,(xlim,ylim))
 score= 0
+soundtrack = mixer.Sound('audios/21. Loonboon IN-GAME.mp3')
 
 #funzione che calcola se sei colpito o meno 
 #attenzione il primo oggetto che si passa alla funzione è quello a cui si applica l'effetto
@@ -79,7 +84,7 @@ def outofbound(obj,x,y):
 #########################################################################################################################################
 
 class Character:
-    def __init__(self, image, size, speed,hp, position, direction, aura_frame = 0):
+    def __init__(self, image, size, speed,hp, position, direction, sound = None,volume= None, aura_frame = 0):
 
         #instance variable
         self.hp = hp
@@ -99,6 +104,10 @@ class Character:
         self.rect = self.image.get_rect()
         self.mask = game.mask.from_surface(self.image)
         self.rect.topleft = self.position
+        #sound variables
+        if sound is not None:
+            self.sound = [ mixer.Sound(s) for s in sound ]
+        self.volume = volume 
         #frame per aura effects
         self.aura_frame = aura_frame
                                  ######### definzione dei metodi ##########
@@ -133,6 +142,16 @@ class Character:
     def draw(self):
         if self.hp >0:
             screen.blit(self.image, self.position)
+
+    def soundeff(self,n = 0): #suona l'ennesima track
+            if self.sound is not None:
+                if type(self.volume) is list:
+                    v = self.volume[n]
+                else:
+                    v = self.volume
+                self.sound[n].set_volume(v)
+            self.sound[n].play()
+
 
     def aura(self,pic,dim,frames): #gli diamo il frame dall'esterno così posso controllarlo dentro il while frame per frame ?
         if self.hp > 0:
@@ -170,8 +189,8 @@ class Character:
             self.status_effects.remove(e)  #rimuovo gli effetti scaduti dalla lista di effetti
 
 class Stefano(Character):
-    def __init__(self, image, size, speed,hp, position, direction, spawn):
-        super().__init__(image,size,speed,hp,position,direction)
+    def __init__(self, image, size, speed,hp, position, direction,spawn,sound=None, volume=None):
+        super().__init__(image,size,speed,hp,position,direction,sound,volume)
         self.spawn = spawn
     def update_position(self):
         #Move the character based on direction and speed
@@ -199,8 +218,8 @@ class Stefano(Character):
         self.base_speed += int((Bolognesi.base_speed/(4*score+1)))  
 
 class shooter(Character):
-    def __init__(self, image, size, speed,hp, position, direction,timer,spread):
-        super().__init__(image,size,speed,hp,position,direction)
+    def __init__(self, image, size, speed,hp, position, direction,timer,spread,sound=None,volume=None):
+        super().__init__(image,size,speed,hp,position,direction,sound,volume)
         self.timer= timer    #contatore (gli shooter vogliamo che despawnino indipendentemente dalla vita o meno)
         self.spread = spread #ampiezza angolare dello sparo (in gradi)
         self.projectiles =[]
@@ -222,8 +241,8 @@ class shooter(Character):
 
 #classe dei proiettili che hanno un tipo e presumibilmente altre cose in futuro
 class projectile(Character):
-    def __init__(self, image, size, speed,hp, position, direction, type=None):
-        super().__init__(image,size,speed,hp,position,direction)
+    def __init__(self, image, size, speed,hp, position, direction,  sound=None, volume=None,type=None):
+        super().__init__(image,size,speed,hp,position,direction,sound,volume)
         self.type = type
 
 class status:
@@ -282,8 +301,9 @@ player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
 #player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
 #player.status_effects.append(status(90,'fire'))
 #oggetto bolognesi
-Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0],0)
-
+Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0], sound =['audios/bolognesi-passing.mp3'],volume = 0.3, spawn=0)
+#Bolo_passing = mixer.Sound('audios/bolognesi-passing.mp3')
+#Bolo_passing.set_volume(0.3)
 #oggetto bonati
 Claudio_image = []
 with os.scandir('fotoClaudio') as d:
@@ -321,6 +341,7 @@ event_jumpscare= np.random.randint(5,10)
 #usiamo lista e append nativo di pyton
 last_n_position = []
 
+soundtrack.play(999)
 #inizializzazione gioco
 game.init()
 running = True
@@ -462,6 +483,7 @@ while running:
     #ho tolto un due
     if outofbound(Bolognesi,xlim,ylim):
         Bolognesi.accelerate()
+        Bolognesi.soundeff(0)
         #print(Bolognesi.speed)
         score+=1
    
@@ -472,6 +494,7 @@ while running:
         Bolognesi.size = np.random.randint(50, 300)
         Bolognesi.update_mask()
         Bolognesi.hp = 1
+    
 
     # set initial spawn position
         if Bolognesi.spawn == 0:  #north
@@ -575,8 +598,10 @@ score_text = font.render(f"Score: {int(score)}", True, text_color)
 screen.blit(score_text, (300, 480))
 
 game.display.update()
-time.sleep(3)
+mixer.stop()
+game.time.delay(3000)
 game.quit()
+
 
 
 #add pause
