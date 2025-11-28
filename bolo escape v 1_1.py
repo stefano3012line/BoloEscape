@@ -587,7 +587,7 @@ screen.blit(score_text, (300, 480))
 
 game.display.update()
 mixer.stop()
-time.sleep(3)
+game.time.delay(3000)
 game.quit()
 
 
