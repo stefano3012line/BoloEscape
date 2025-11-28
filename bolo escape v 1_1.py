@@ -1,7 +1,13 @@
-import pygame as game
-import numpy as np
+
 import time
 import os
+import pygame as game
+import numpy as np
+import itertools as iter
+from pygame import mixer 
+
+
+mixer.init()
 #dimensioni schermo
 xlim,ylim=1280,720
 screen = game.display.set_mode((xlim,ylim))
@@ -9,10 +15,11 @@ clock = game.time.Clock()
 background=game.image.load('unipipi.jpeg')
 background=game.transform.smoothscale(background,(xlim,ylim))
 score= 0
+soundtrack = mixer.Sound('audios/21. Loonboon IN-GAME.mp3')
 
 #funzione che calcola se sei colpito o meno 
 #attenzione il primo oggetto che si passa alla funzione è quello a cui si applica l'effetto
-def hit(obj1, obj2,key = None,t = None,damage = True):
+def hit(obj1, obj2,key=None,t=None,damage=True, both=False):
     if obj1.hp > 0 and obj2.hp > 0:
         # aggiorna rect
         obj1.rect.topleft = obj1.position
@@ -24,14 +31,41 @@ def hit(obj1, obj2,key = None,t = None,damage = True):
                 if damage:
                     obj1.hp -= 1
                 obj1.status_effects.append(status(30,'invincible')) #di default ti rende invincibile per mezzo secondo 
-                if (key is not None) and (t is not None):           #aggiunge un altro effetto se voluto
-                    for i,j in zip(t,key):
-                        obj1.status_effects.append(status(i,j,image=('fotoStatus/' + j + '.png'), size = 50))
+                if t is not None:        #aggiunge un altro effetto se voluto
+                    if key is not None:
+                        for i,j in zip(t,key):
+                            obj1.status_effects.append(status(i,j,image=('fotoStatus/' + j + '.png'), size = 50))
+                            print('bolo effettuato')
+                            if both:
+                                obj2.status_effects.append(status(i,j))
+                    else: 
+                        for i,j in zip(t,obj2.type):
+                            obj1.status_effects.append(status(i,j,image=('fotoStatus/' + j + '.png'), size = 50))
+                            if both:
+                                obj2.status_effects.append(status(i,j))
+
+
+            
                         #print('fotoStatus/' + j + 'png')
             if obj2.hittable: 
                 obj2.hp -= 1
             return True
-#funzione che ruopta i vettori #serve per meggiolaro
+
+#fuznione che ti cura quando hitti un oggetto # il primo oggetto è il destinatario dell'healing
+def heal(obj1,obj2,n):
+    if obj1.hp > 0 and obj2.hp > 0: #per l'healing non serve in effetti
+        # aggiorna rect
+        obj1.rect.topleft = obj1.position
+        obj2.rect.topleft = obj2.position
+        #offset necessario per overlap
+        #offset = (int(obj2.rect.x - obj1.rect.x), int(obj2.rect.y - obj1.rect.y))
+        if obj1.mask.overlap(obj2.mask,(int(obj2.rect.x - obj1.rect.x), int(obj2.rect.y - obj1.rect.y))):
+            obj1.hp += n
+            obj2.hp -= 1
+            return True
+                
+
+#funzione che ruota i vettori #serve per meggiolaro
 
 def rotate_Vector(V,phi):
     theta = phi*np.pi/180
@@ -50,11 +84,12 @@ def outofbound(obj,x,y):
 #########################################################################################################################################
 
 class Character:
-    def __init__(self, image, size, speed,hp, position, direction):
+    def __init__(self, image, size, speed,hp, position, direction, aura_frame = 0):
 
         #instance variable
         self.hp = hp
         self._size = size
+        self.base_size = size
         self.speed = speed
         self.base_speed = speed
         #movement variables
@@ -69,6 +104,8 @@ class Character:
         self.rect = self.image.get_rect()
         self.mask = game.mask.from_surface(self.image)
         self.rect.topleft = self.position
+        #frame per aura effects
+        self.aura_frame = aura_frame
                                  ######### definzione dei metodi ##########
 
     #riaggiornare la size dentro il dizionario per ridefinire anche mask e rettangolo in automatico
@@ -92,27 +129,45 @@ class Character:
         if self.hp> 0: #controllo che l'hp dell'oggetto sia maggiore di zero se no si ferma (boh non so se è necessario ci sta un botto di double check in sto codice)
             self.position += self.direction * self.speed
             self.rect.topleft = self.position
+    #per updatare la maskera quando l'effetto enlarge ti cambia size
+    def update_mask(self):
+        self.rect = self.image.get_rect()
+        self.mask = game.mask.from_surface(self.image)
     
     #disegna l'oggetto nel punto in cui si trova
     def draw(self):
         if self.hp >0:
             screen.blit(self.image, self.position)
 
+    def aura(self,pic,dim,frames): #gli diamo il frame dall'esterno così posso controllarlo dentro il while frame per frame ?
+        if self.hp > 0:
+            im = game.image.load(pic)
+            dim_array = np.linspace(self.size,dim,frames)
+            self.aura_frame +=1
+            if self.aura_frame >= frames:
+                self.aura_frame = 0
+            a = game.transform.smoothscale(im, (dim_array[self.aura_frame],dim_array[self.aura_frame]))
+            screen.blit(a,self.centre -0.5*dim_array[self.aura_frame])
+
+
+
     #controlla se ci sono status effect in caso li applico deapplico quelli scaduti e li rimuovo dalla lista di status effect
-    def update_status_effects(self):
+    def update_status_effects(self,draw=False):
 
         #disegno lo status effect se ha un immagine e una dimensione (checko solo la dimensione quind se gli dai quello e non l'immagine sono cazzi)
-        n = 1
-        for k in self.status_effects:
-            if k.size is not None:
-                k.draw(5 + n*k.size,ylim - k.size)
-                n +=1
+        n = 0
+        if draw:
+            for k in self.status_effects:
+                if k.key != 'invincible':
+                    k.draw(5 + n*k.size,ylim - k.size)
+                    n +=1
         
         #per questioni di come pyton conta gli indici tocca creare una tabella temporanea per gli effetti scaduti
         expired = []
         for eff in self.status_effects:
             if not(eff.apply(self)): #applico gli effetti quando controllo se sono scaduti    # returns False if expired
                 expired.append(eff)
+                #print(eff)
 
         # remove ended effects
         for e in expired:
@@ -145,7 +200,8 @@ class Stefano(Character):
 
     #accellera bolognesi ogni volta che esce dallo schermo
     def accelerate(self):
-        self.speed += int((Bolognesi.speed/(4*score+1))) 
+        self.speed += int((Bolognesi.speed/(4*score+1)))
+        self.base_speed += int((Bolognesi.base_speed/(4*score+1)))  
 
 class shooter(Character):
     def __init__(self, image, size, speed,hp, position, direction,timer,spread):
@@ -157,7 +213,7 @@ class shooter(Character):
         if self.hp > 0:
             self.timer +=1
     #funzione per caricare i proiettili in una lista
-    def load_projectile(self,point,Class,n): #n è il numero di proiettili da sparare dentro lo spread
+    def load_projectile(self,point,n): #n è il numero di proiettili da sparare dentro lo spread
         working_position = self.position.copy() +(0,self.size/2)  #+ self.size/2 serve solo a far sparare dal punto della pistola 
                                                                   #(potrei sostituirla con il centro o renderlo un parametro esterno per generalizzarlo ad altri personaggi)
         V1 = (point - working_position)/np.linalg.norm(point - working_position)
@@ -166,8 +222,14 @@ class shooter(Character):
             directions.append(rotate_Vector(V1.copy(),i))
         #print(direction)
         for k in directions:
-           self.projectiles.append(Class('heart.png',40,50,1,working_position,k.copy())) 
+           self.projectiles.append(projectile('heart.png',35,40,1,working_position,k.copy(),type = [np.random.choice(negative_stauts_list)]))  # per adesso applica uno status random
         #return proj #ho effettivamente bisogno di returnarla? no potrebbe essere un array contenuto nella classe e avrebbe più senso
+
+#classe dei proiettili che hanno un tipo e presumibilmente altre cose in futuro
+class projectile(Character):
+    def __init__(self, image, size, speed,hp, position, direction, type=None):
+        super().__init__(image,size,speed,hp,position,direction)
+        self.type = type
 
 class status:
     def __init__(self,duration,key,image = None ,size =None):
@@ -188,7 +250,10 @@ class status:
             obj.hittable = False
         elif self.key == 'confusion':
             obj.confused = True
-        self.duration -=1
+        elif self.key == 'enlarge':
+            obj.size = 3*obj.base_size
+            obj.update_mask()
+        self.duration -=1 
 
         return self.duration > 0 #True se è in vigore 
     def deapply(self,obj):
@@ -199,6 +264,9 @@ class status:
             obj.hittable = True
         elif self.key == 'confusion':
             obj.confused = False
+        elif self.key == 'enlarge':
+            obj.size = obj.base_size
+            obj.update_mask()
         return False #serve per la list comprension
     def draw(self,xpos,ypos):
         #if self.image is not None:
@@ -215,10 +283,11 @@ class status:
 #lista degli status
 
 #oggetto player
-player = Character("player.png",50,20,7,[xlim/2 - 25, ylim/2 - 25], [0,0])
+player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
 #player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
 #player.status_effects.append(status(90,'fire'))
 #oggetto bolognesi
+Bolo_passing =mixer.Sound('audios/bolognesi-passing.mp3')
 Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0],0)
 
 #oggetto bonati
@@ -227,13 +296,18 @@ with os.scandir('fotoClaudio') as d:
     for e in d:
         Claudio_image.append('fotoClaudio/'+ e.name)
 #print(image)
-Bonati = Character(np.random.choice(Claudio_image),85,10,0,[0,0],[0,0])
+Bonati = Character(np.random.choice(Claudio_image),85,15,0,[0,0],[0,0])
 Bonati_spawn_value= 4
 
 #oggetto meggiolaro e lista dei proiettili
 Meggiolaro = shooter("meggioladro.png",200,0,0,[xlim -200,ylim -200],[0,0],0,30)
-Meggiolaro_spawn_value= 2
-#Proiettili = []
+Meggiolaro_spawn_value = 2
+
+negative_stauts_list = ['confusion','slowness','enlarge'] #se si vuole randomizzare sulla scelta degli effetti si usa questa lista
+#oggetto Lamanna
+
+Lamanna = Character('lamanna.jpeg',90,0,0,[0,0],[0,0])
+lamanna_spawn_value = 10
 
 #immaginie e size cuori
 heart_size = 60
@@ -244,8 +318,8 @@ jumpscare=game.image.load('bolo_jumpscare.jpg')
 jumpscare=game.transform.smoothscale(jumpscare,(xlim,ylim))
 event_jumpscare= np.random.randint(5,10)
 
-#lista status effect immage
-
+#playing soundtrack
+soundtrack.play(999)
 
 #######################################################################################################################################
 
@@ -263,19 +337,18 @@ while running:
         if event.type == game.QUIT:
             running = False
     #sistema di coordinate centrato in alto a sinistra e background
-    #game.display.flip()
     screen.blit(background,(0,0))
 
     #game speed
     clock.tick(30)
-    
+
     #game event jumpscare
-    #if event_jumpscare == score:
-        #screen.blit(jumpscare,(0,0))
-        #game.display.update()
-        #time.sleep(0.3)
-        #event_jumpscare+=np.random.randint(5,15)
-        #score+=1
+    if event_jumpscare == score:
+        screen.blit(jumpscare,(0,0))
+        game.display.update()
+        time.sleep(0.3)
+        event_jumpscare+=np.random.randint(5,15)
+        score+=1
     ###################################################################################################################
     
 
@@ -287,7 +360,7 @@ while running:
     #disegno il player
 
     #la funzione update_status effect li applica e rimuove in automatico perché siamo persone per bene
-    player.update_status_effects()
+    player.update_status_effects(draw=True)
 
 
     player.draw()
@@ -336,7 +409,7 @@ while running:
     player.update_position()
 
     last_n_position.append(player.position)
-    if len(last_n_position) > 20:
+    if len(last_n_position) > 30:
         last_n_position = last_n_position[1:]
     #####################################################################################################################
 
@@ -346,17 +419,17 @@ while running:
 
     #####################################################################################################################
     #aggiungo claudio bonati
-    #if int score è solo un proof of concept poi tocca fare una cosa seria per ora bonati spawna quando lo score è divisibile per 17 e despowna quando viene colpito
-    if int(score) == Bonati_spawn_value:
-        Bonati.hp = 1
-        Bonati_spawn_value = score + np.random.randint(7,13)
-    if Bonati.hp ==1:
-        Bonati.direction = np.sign(last_n_position[0] - Bonati.position)#/np.linalg.norm(last_n_position[0] - Bonati.position)
-    if Bonati.hp == 0:
-        Bonati.position = np.array([0,0],dtype=float)
-    Bonati.draw()
     
-
+    if int(score) == Bonati_spawn_value:
+        Bonati_spawn_value = score + np.random.randint(7,13) 
+        Bonati.hp = 1
+    if Bonati.hp == 1:
+        Bonati.direction = np.sign(last_n_position[0] - Bonati.position)/np.linalg.norm(np.sign(last_n_position[0] - Bonati.position))
+    if Bonati.hp == 0:
+        angles = [[0,0],[0,ylim],[xlim,0],[xlim,ylim]]
+        Bonati.position = np.array(angles[np.random.randint(0,4)],dtype=float) #per farlo spawnare in punti randomici #randint esclude l'upperbound
+    
+    Bonati.draw()
     Bonati.update_position()
     
     # checko l'hit con bonati
@@ -365,17 +438,38 @@ while running:
     #print(Bonati.direction)
     #####################################################################################################################
 
+    #####################################################################################################################
+
+                                                  #LAMANNA#
+
+    #####################################################################################################################
+    #aggiungo Lamanna
+    #if int score è solo un proof of concept poi tocca fare una cosa seria per ora bonati spawna quando lo score è divisibile per 17 e despowna quando viene colpito
+    if int(score) == lamanna_spawn_value:
+        Lamanna.position = [np.random.randint(0,xlim-Lamanna.size),np.random.randint(0,ylim - Lamanna.size)]
+        lamanna_spawn_value = score + np.random.randint(10,17)
+        Lamanna.hp = 1
+    if Lamanna.hp == 0:
+        Lamanna.position = [0,0]
+    Lamanna.draw()
+    Lamanna.aura('heal.png',3*Lamanna.size, 35)
+    heal(player,Lamanna,1)
+    #####################################################################################################################
+
+
 
     #####################################################################################################################
 
                                                   #BOLOGNESI#
 
     #####################################################################################################################
+    #Bolognesi.update_status_effects() #per ora non decommentare perché ci sono problemi se bolo viene slowato
 
     # check if he is off-screen → RESPAWN
     #ho tolto un due
     if outofbound(Bolognesi,xlim,ylim):
         Bolognesi.accelerate()
+        Bolo_passing.play()
         #print(Bolognesi.speed)
         score+=1
    
@@ -405,6 +499,7 @@ while running:
     Bolognesi.draw()
     #checking hit
     hit(player, Bolognesi)
+    hit(Bolognesi,Lamanna,damage = False)
     if hit(Bolognesi, Bonati):
         score +=1
     ################################################################################################################################
@@ -424,14 +519,13 @@ while running:
         #print(Proiettili)
         #print(Meggiolaro.timer)
         if Meggiolaro.timer == 60:
-            Meggiolaro.load_projectile(player.position,Character,3)  #possiamo settare quanti proiettili spara ogni volta  in questo caso 3 
-                                                                     #bisogna dire la classe di proiettli che voglio usare
+            Meggiolaro.load_projectile(player.position,2)  #possiamo settare quanti proiettili spara ogni volta  in questo caso 2
             #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 75:
-            Meggiolaro.load_projectile(player.position,Character,2)
+            Meggiolaro.load_projectile(player.position,3)
             #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 90:
-            Meggiolaro.load_projectile(player.position,Character,3)
+            Meggiolaro.load_projectile(player.position,4)
             #print(Meggiolaro_spawn_value)
         
         #print(Proiettili) # per controllare che vengano rimossi correttamente
@@ -447,7 +541,7 @@ while running:
             i.update_position()
             #print(i.direction)
             i.draw()
-            if hit(player,i,['confusion'],[120]) or outofbound(i,xlim,ylim):
+            if outofbound(i,xlim,ylim) or hit(player,i,t=[120]) or hit(Bolognesi,i,t=[30],damage= False):
                 Meggiolaro.projectiles.remove(i)
 
     #print(Meggiolaro.projectiles) #per controllare che i proiettili vengano effettivamente rimossi come devono
@@ -484,18 +578,19 @@ background=game.image.load('death_screen.jpg')
 background=game.transform.smoothscale(background,(xlim,ylim))
 screen.blit(background,(0,0))
 text_color = (255, 255, 255)
-font = game.font.SysFont('Aptos', 70)
+font = game.font.SysFont('Monocraft', 70)
 score_text = font.render(f"Score: {int(score)}", True, text_color)
 screen.blit(score_text, (300, 480))
 
 game.display.update()
-time.sleep(1)
+mixer.stop()
+time.sleep(3)
 game.quit()
 
 
-#add projectile types
 #add pause
 #play audio
 #adattare la size schermo
 #add tredicucci
 #rework claudio
+#ADD GIRELLE
