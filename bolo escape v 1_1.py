@@ -3,16 +3,16 @@ import time
 import os
 import pygame as game
 import numpy as np
-import itertools as iter
-from pygame import mixer 
-
+import itertools as iter 
+from pygame import mixer
 
 mixer.init()
+
 #dimensioni schermo
 xlim,ylim=1280,720
 screen = game.display.set_mode((xlim,ylim))
 clock = game.time.Clock()
-background=game.image.load('unipipi.jpeg')
+background=game.image.load('LEVEL 1/unipipi.jpeg')
 background=game.transform.smoothscale(background,(xlim,ylim))
 score= 0
 soundtrack = mixer.Sound('audios/21. Loonboon IN-GAME.mp3')
@@ -84,7 +84,7 @@ def outofbound(obj,x,y):
 #########################################################################################################################################
 
 class Character:
-    def __init__(self, image, size, speed,hp, position, direction, aura_frame = 0):
+    def __init__(self, image, size, speed,hp, position, direction, sound = None,volume= None, aura_frame = 0):
 
         #instance variable
         self.hp = hp
@@ -104,6 +104,10 @@ class Character:
         self.rect = self.image.get_rect()
         self.mask = game.mask.from_surface(self.image)
         self.rect.topleft = self.position
+        #sound variables
+        if sound is not None:
+            self.sound = [ mixer.Sound(s) for s in sound ]
+        self.volume = volume 
         #frame per aura effects
         self.aura_frame = aura_frame
                                  ######### definzione dei metodi ##########
@@ -138,6 +142,22 @@ class Character:
     def draw(self):
         if self.hp >0:
             screen.blit(self.image, self.position)
+
+    def soundon(self,n = 0): #suona l'ennesima track
+            if self.sound is not None:
+                if type(self.volume) is list:
+                    v = self.volume[n]
+                else:
+                    v = self.volume
+                self.sound[n].set_volume(v)
+    
+            
+            self.sound[n].play()
+
+    def soundoff(self,n=0):
+            if self.hp<=0:
+                self.sound[n].stop()
+
 
     def aura(self,pic,dim,frames): #gli diamo il frame dall'esterno così posso controllarlo dentro il while frame per frame ?
         if self.hp > 0:
@@ -175,8 +195,8 @@ class Character:
             self.status_effects.remove(e)  #rimuovo gli effetti scaduti dalla lista di effetti
 
 class Stefano(Character):
-    def __init__(self, image, size, speed,hp, position, direction, spawn):
-        super().__init__(image,size,speed,hp,position,direction)
+    def __init__(self, image, size, speed,hp, position, direction,spawn,sound=None, volume=None):
+        super().__init__(image,size,speed,hp,position,direction,sound,volume)
         self.spawn = spawn
     def update_position(self):
         #Move the character based on direction and speed
@@ -204,8 +224,8 @@ class Stefano(Character):
         self.base_speed += int((Bolognesi.base_speed/(4*score+1)))  
 
 class shooter(Character):
-    def __init__(self, image, size, speed,hp, position, direction,timer,spread):
-        super().__init__(image,size,speed,hp,position,direction)
+    def __init__(self, image, size, speed,hp, position, direction,timer,spread,sound=None,volume=None):
+        super().__init__(image,size,speed,hp,position,direction,sound,volume)
         self.timer= timer    #contatore (gli shooter vogliamo che despawnino indipendentemente dalla vita o meno)
         self.spread = spread #ampiezza angolare dello sparo (in gradi)
         self.projectiles =[]
@@ -227,8 +247,8 @@ class shooter(Character):
 
 #classe dei proiettili che hanno un tipo e presumibilmente altre cose in futuro
 class projectile(Character):
-    def __init__(self, image, size, speed,hp, position, direction, type=None):
-        super().__init__(image,size,speed,hp,position,direction)
+    def __init__(self, image, size, speed,hp, position, direction,  sound=None, volume=None,type=None):
+        super().__init__(image,size,speed,hp,position,direction,sound,volume)
         self.type = type
 
 class status:
@@ -284,30 +304,29 @@ class status:
 
 #oggetto player
 player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
-#player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
+player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
 #player.status_effects.append(status(90,'fire'))
 #oggetto bolognesi
-Bolo_passing =mixer.Sound('audios/bolognesi-passing.mp3')
-Bolo_passing.set_volume(0.3)
-Bolognesi = Stefano("bolognesi.jpeg",200,300,0,[-300,0],[0,0],0)
-
+Bolognesi = Stefano("LEVEL 1/bolognesi.jpeg",200,300,0,[-300,0],[0,0], sound =['audios/bolognesi-passing (mp3cut.net).mp3'],volume = 0.3, spawn=0)
+#Bolo_passing = mixer.Sound('audios/bolognesi-passing.mp3')
+#Bolo_passing.set_volume(0.3)
 #oggetto bonati
 Claudio_image = []
-with os.scandir('fotoClaudio') as d:
+with os.scandir('LEVEL 1/fotoClaudio') as d:
     for e in d:
-        Claudio_image.append('fotoClaudio/'+ e.name)
+        Claudio_image.append('LEVEL 1/fotoClaudio/'+ e.name)
 #print(image)
 Bonati = Character(np.random.choice(Claudio_image),85,15,0,[0,0],[0,0])
 Bonati_spawn_value= 4
 
 #oggetto meggiolaro e lista dei proiettili
-Meggiolaro = shooter("meggioladro.png",200,0,0,[xlim -200,ylim -200],[0,0],0,30)
+Meggiolaro = shooter("LEVEL 1/meggioladro.png",200,0,0,[xlim -200,ylim -200],[0,0],0,30, sound=['audios/meggio shooting.mp3'],volume=1)
 Meggiolaro_spawn_value = 2
-Meggiolaro_shot_sound=mixer.Sound('audios/meggio shooting.mp3')
+
 negative_stauts_list = ['confusion','slowness','enlarge'] #se si vuole randomizzare sulla scelta degli effetti si usa questa lista
 #oggetto Lamanna
 
-Lamanna = Character('lamanna.jpeg',90,0,0,[0,0],[0,0])
+Lamanna = Character('LEVEL 1/lamanna.jpeg',90,0,0,[0,0],[0,0])
 lamanna_spawn_value = 10
 
 #immaginie e size cuori
@@ -315,12 +334,11 @@ heart_size = 60
 heart = game.transform.smoothscale(game.image.load("massimino.png"),(heart_size,heart_size))
 
 #evento jumpscare
-jumpscare=game.image.load('bolo_jumpscare.jpg')
+jumpscare=game.image.load('LEVEL 1/bolo_jumpscare.jpg')
 jumpscare=game.transform.smoothscale(jumpscare,(xlim,ylim))
 event_jumpscare= np.random.randint(5,10)
 
-#playing soundtrack
-soundtrack.play(999)
+
 
 #######################################################################################################################################
 
@@ -329,6 +347,7 @@ soundtrack.play(999)
 #usiamo lista e append nativo di pyton
 last_n_position = []
 
+soundtrack.play(999)
 #inizializzazione gioco
 game.init()
 running = True
@@ -342,14 +361,15 @@ while running:
 
     #game speed
     clock.tick(30)
-
+    
     #game event jumpscare
     if event_jumpscare == score:
         screen.blit(jumpscare,(0,0))
         game.display.update()
-        time.sleep(0.3)
+        game.time.delay(300)
+        #time.sleep(0.3)
         event_jumpscare+=np.random.randint(5,15)
-        score+=1
+        #score+=1
     ###################################################################################################################
     
 
@@ -424,6 +444,7 @@ while running:
     if int(score) == Bonati_spawn_value:
         Bonati_spawn_value = score + np.random.randint(7,13) 
         Bonati.hp = 1
+        print('Bonati',score, Bonati_spawn_value)
     if Bonati.hp == 1:
         Bonati.direction = np.sign(last_n_position[0] - Bonati.position)/np.linalg.norm(np.sign(last_n_position[0] - Bonati.position))
     if Bonati.hp == 0:
@@ -453,7 +474,7 @@ while running:
     if Lamanna.hp == 0:
         Lamanna.position = [0,0]
     Lamanna.draw()
-    Lamanna.aura('heal.png',3*Lamanna.size, 35)
+    Lamanna.aura('LEVEL 1/heal.png',3*Lamanna.size, 35)
     heal(player,Lamanna,1)
     #####################################################################################################################
 
@@ -470,7 +491,7 @@ while running:
     #ho tolto un due
     if outofbound(Bolognesi,xlim,ylim):
         Bolognesi.accelerate()
-        Bolo_passing.play()
+    
         #print(Bolognesi.speed)
         score+=1
    
@@ -481,6 +502,9 @@ while running:
         Bolognesi.size = np.random.randint(50, 300)
         Bolognesi.update_mask()
         Bolognesi.hp = 1
+        Bolognesi.soundon()
+
+    
 
     # set initial spawn position
         if Bolognesi.spawn == 0:  #north
@@ -493,16 +517,17 @@ while running:
             Bolognesi.position = np.array([-Bolognesi.size,np.random.randint(0, ylim-Bolognesi.size)], dtype=float)
 
     #print("Spawn =", Bolognesi.spawn,"| Direction =", Bolognesi.direction,"| Pos =", Bolognesi.position,"| Size =", Bolognesi.size "|speed =" Bolognesi.speed)
-
     # move Bolognesi
     Bolognesi.update_position()
     # draw
     Bolognesi.draw()
     #checking hit
-    hit(player, Bolognesi)
+    if hit(player, Bolognesi):
+        Bolognesi.soundoff()
     hit(Bolognesi,Lamanna,damage = False)
     if hit(Bolognesi, Bonati):
         score +=1
+        Bolognesi.soundoff()
     ################################################################################################################################
 
 
@@ -521,15 +546,15 @@ while running:
         #print(Meggiolaro.timer)
         if Meggiolaro.timer == 60:
             Meggiolaro.load_projectile(player.position,2)  #possiamo settare quanti proiettili spara ogni volta  in questo caso 2
-            Meggiolaro_shot_sound.play()
+            Meggiolaro.soundon()
             #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 75:
             Meggiolaro.load_projectile(player.position,3)
-            Meggiolaro_shot_sound.play()
+            Meggiolaro.soundon()
             #print(Meggiolaro_spawn_value)
         if Meggiolaro.timer == 90:
             Meggiolaro.load_projectile(player.position,4)
-            Meggiolaro_shot_sound.play()
+            Meggiolaro.soundon()
             #print(Meggiolaro_spawn_value)
         
         #print(Proiettili) # per controllare che vengano rimossi correttamente
@@ -578,7 +603,7 @@ while running:
     
 
 #end game routine
-background=game.image.load('death_screen.jpg')
+background=game.image.load('LEVEL 1/death_screen.jpg')
 background=game.transform.smoothscale(background,(xlim,ylim))
 screen.blit(background,(0,0))
 text_color = (255, 255, 255)
@@ -590,6 +615,7 @@ game.display.update()
 mixer.stop()
 game.time.delay(3000)
 game.quit()
+
 
 
 #add pause
