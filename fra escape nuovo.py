@@ -38,7 +38,7 @@ def hit(obj1, obj2,key=None,t=None,damage=True, both=False):
             if obj1.hittable: 
                 if damage:
                     obj1.hp -= 1
-                obj1.status_effects.append(status(30,'invincible')) #di default ti rende invincibile per mezzo secondo 
+                    obj1.status_effects.append(status(30,'invincible')) #di default ti rende invincibile per mezzo secondo 
                 if t is not None:        #aggiunge un altro effetto se voluto
                     if key is not None:
                         for i,j in zip(t,key):
@@ -310,7 +310,7 @@ class status:
 ########################################################################################################################################
 #lista degli status
 #girelle
-girella = Character('girella.png',40,0,1,(np.random.randint(xlim-18),np.random.randint(ylim -18)), (0,0))
+girella = Character('girella.png',40,0,1,(np.random.randint(xlim-40),np.random.randint(ylim -40)), (0,0))
 
 #oggetto player
 player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
@@ -435,18 +435,19 @@ while running:
             player.direction[0] = 0
         if direction_pressed[1]:
             player.direction[1] = 0
-
+    
 
     player.update_position()
 
     last_n_position.append(player.position)
     if len(last_n_position) > 30:
         last_n_position = last_n_position[1:]
-
-
+    
+    #####################################################################################################################
+    #girelle
     girella.draw()
     if hit(player,girella,damage=False):
-        girella.position = (np.random.randint(xlim-18),np.random.randint(ylim -18))
+        girella.position = (np.random.randint(xlim-40),np.random.randint(ylim -40))
         girella.hp = 1 
         score +=1
     #####################################################################################################################
