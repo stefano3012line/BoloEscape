@@ -358,8 +358,8 @@ girella = Character('girella.png',40,0,1,(np.random.randint(xlim-40),np.random.r
 
 #oggetto player
 player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
-player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
-#player.status_effects.append(status(90,'fire'))
+#player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
+
 #oggetto bolognesi
 Bolognesi = Stefano("LEVEL 1/bolognesi.jpeg",200,300,0,[-300,0],[0,0], sound =['audios/bolognesi-passing (mp3cut.net).mp3'],volume = 0.3, spawn=0)
 #Bolo_passing = mixer.Sound('audios/bolognesi-passing.mp3')
