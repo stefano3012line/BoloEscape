@@ -533,7 +533,7 @@ while running:
 
     #####################################################################################################################
     #aggiungo Lamanna
-    #if int counter è solo un proof of concept poi tocca fare una cosa seria per ora Rossini spawna quando lo counter è divisibile per 17 e despowna quando viene colpito
+    
     '''if int(counter) == lamanna_spawn_value:
         Lamanna.position = [np.random.randint(0,xlim-Lamanna.size),np.random.randint(0,ylim - Lamanna.size)]
         lamanna_spawn_value = counter +  1 #np.random.randint(10,17)
@@ -542,22 +542,7 @@ while running:
         Lamanna.position = [0,0]
     Lamanna.draw()
     Lamanna.aura('Media/LEVEL 1/heal.png',3*Lamanna.size, 35)
-    if heal(player,Lamanna,1):
-        C1 = player.centre
-        shield_list.append(shield(np.random.choice(Claudio_image),30,90,0,3,1))
-
-    index = 0
-    while len(shield_list) > index:
-        shield_list[index].update_coordinates(player)
-        shield_list[index].draw()
-        hit(shield_list[index],Bolognesi)
-        hit(shield_list[index],Rossini)
-        for j in Meggiolaro.projectiles:
-            hit(shield_list[index],j)
-        if shield_list[index].hp <= 0:
-            del shield_list[index]
-        else:
-            index += 1
+    heal(player,Lamanna,1)
     '''
 
     #####################################################################################################################
@@ -735,6 +720,4 @@ game.quit()
 #add pause
 #play audio
 #adattare la size schermo
-#add tredicucci
-#rework claudio
-#ADD GIRELLE
+
