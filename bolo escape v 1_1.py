@@ -6,16 +6,24 @@ import numpy as np
 import itertools as iter 
 from pygame import mixer
 
+import time
+import os
+import pygame as game
+import numpy as np
+import itertools as iter 
+from pygame import mixer
+
 mixer.init()
 
 #dimensioni schermo
 xlim,ylim=1280,720
-screen = game.display.set_mode((xlim,ylim))
+screen = game.display.set_mode((xlim,ylim),game.FULLSCREEN)
 clock = game.time.Clock()
-background=game.image.load('LEVEL 1/unipipi.jpeg')
+background=game.image.load('Media/LEVEL 1/unipipi.jpeg')
 background=game.transform.smoothscale(background,(xlim,ylim))
-score= 0
-soundtrack = mixer.Sound('audios/21. Loonboon IN-GAME.mp3')
+counter = 0
+score = 0
+soundtrack = mixer.Sound('Media/audios/21. Loonboon IN-GAME.mp3')
 
 #funzione che calcola se sei colpito o meno 
 #attenzione il primo oggetto che si passa alla funzione è quello a cui si applica l'effetto
@@ -30,17 +38,17 @@ def hit(obj1, obj2,key=None,t=None,damage=True, both=False):
             if obj1.hittable: 
                 if damage:
                     obj1.hp -= 1
-                obj1.status_effects.append(status(30,'invincible')) #di default ti rende invincibile per mezzo secondo 
+                    obj1.status_effects.append(status(30,'invincible')) #di default ti rende invincibile per mezzo secondo 
                 if t is not None:        #aggiunge un altro effetto se voluto
                     if key is not None:
                         for i,j in zip(t,key):
-                            obj1.status_effects.append(status(i,j,image=('fotoStatus/' + j + '.png'), size = 50))
+                            obj1.status_effects.append(status(i,j,image=('Media/fotoStatus/' + j + '.png'), size = 50))
                             print('bolo effettuato')
                             if both:
                                 obj2.status_effects.append(status(i,j))
                     else: 
                         for i,j in zip(t,obj2.type):
-                            obj1.status_effects.append(status(i,j,image=('fotoStatus/' + j + '.png'), size = 50))
+                            obj1.status_effects.append(status(i,j,image=('Media/fotoStatus/' + j + '.png'), size = 50))
                             if both:
                                 obj2.status_effects.append(status(i,j))
 
@@ -100,10 +108,13 @@ class Character:
         self.hittable = True
         self.confused = False
         # Load and scale the image and mask it
-        self.image = game.transform.smoothscale(game.image.load(image), (self.size, self.size))
-        self.rect = self.image.get_rect()
-        self.mask = game.mask.from_surface(self.image)
+        self.image = [game.transform.smoothscale(game.image.load(im), (self.size, self.size)) for im in image]
+        #self.rect = [im.get_rect() for im in self.image ]
+        self.rect = self.image[0].get_rect()
+        #self.mask = [game.mask.from_surface(im) for im in self.image]
+        
         self.rect.topleft = self.position
+        self.mask = game.mask.from_surface(self.image[0])
         #sound variables
         if sound is not None:
             self.sound = [ mixer.Sound(s) for s in sound ]
@@ -120,7 +131,7 @@ class Character:
     @size.setter
     def size(self, new):
         self._size = new
-        self.image = game.transform.smoothscale(self.image, (new, new))
+        self.image = [game.transform.smoothscale(im, (new, new)) for im in self.image]
     
     #centro dell'oggetto (usato in passato per calcolare le hitbox ma ora non serve più)
     @property   
@@ -135,13 +146,17 @@ class Character:
             self.rect.topleft = self.position
     #per updatare la maskera quando l'effetto enlarge ti cambia size
     def update_mask(self):
-        self.rect = self.image.get_rect()
-        self.mask = game.mask.from_surface(self.image)
+        self.rect = self.image[0].get_rect()
+        self.mask = game.mask.from_surface(self.image[0])
     
     #disegna l'oggetto nel punto in cui si trova
-    def draw(self):
+    def draw(self, n=None):
+        if n is not None:
+            i = n
+        else: 
+            i = 0
         if self.hp >0:
-            screen.blit(self.image, self.position)
+            screen.blit(self.image[i], self.position)
 
     def soundon(self,n = 0): #suona l'ennesima track
             if self.sound is not None:
@@ -212,16 +227,11 @@ class Stefano(Character):
             self.direction = np.array([1, 0], dtype=float)
         self.position += self.direction * self.speed/(5*np.sqrt(Bolognesi.size))
         self.rect.topleft = self.position
-    
-    #dato che la size cambia devo cambiare anche il rettangolo altrimenti le hitbox si sfasano
-    def update_mask(self):
-        self.rect = self.image.get_rect()
-        self.mask = game.mask.from_surface(self.image)
 
     #accellera bolognesi ogni volta che esce dallo schermo
     def accelerate(self):
-        self.speed += int((Bolognesi.speed/(4*score+1)))
-        self.base_speed += int((Bolognesi.base_speed/(4*score+1)))  
+        self.speed += int((Bolognesi.speed/(4*counter+1)))
+        self.base_speed += int((Bolognesi.base_speed/(4*counter+1)))  
 
 class shooter(Character):
     def __init__(self, image, size, speed,hp, position, direction,timer,spread,sound=None,volume=None):
@@ -242,7 +252,7 @@ class shooter(Character):
             directions.append(rotate_Vector(V1.copy(),i))
         #print(direction)
         for k in directions:
-           self.projectiles.append(projectile('heart.png',35,40,1,working_position,k.copy(),type = [np.random.choice(negative_stauts_list)]))  # per adesso applica uno status random
+           self.projectiles.append(projectile(['Media/heart.png'],35,40,1,working_position,k.copy(),type = [np.random.choice(negative_stauts_list)]))  # per adesso applica uno status random
         #return proj #ho effettivamente bisogno di returnarla? no potrebbe essere un array contenuto nella classe e avrebbe più senso
 
 #classe dei proiettili che hanno un tipo e presumibilmente altre cose in futuro
@@ -293,6 +303,50 @@ class status:
         #print(self.image)
         screen.blit(self.image,(xpos,ypos))
 
+class shield:
+    def __init__(self,image,size,radius,angle,angular_velocity,hp,sound=None, volume=None):
+        self.hittable = True
+        self.size = size 
+        self.radius = radius 
+        self.angle = angle 
+        self.position = np.array([0,0])
+        self.angular_velocity = angular_velocity
+        self.hp = hp
+        self.status_effects=[]
+        # Load and scale the image and mask it
+        self.image = game.transform.smoothscale(game.image.load(image), (self.size, self.size))
+        self.rect = self.image.get_rect()
+        self.mask = game.mask.from_surface(self.image)
+        self.rect.topleft = self.position
+        #sound variables
+        if sound is not None:
+            self.sound = [ mixer.Sound(s) for s in sound ]
+        self.volume = volume 
+
+    def update_coordinates(self,obj):
+        self.angle = (self.angle + self.angular_velocity)%360
+        r = np.array([0,1])
+        r = rotate_Vector(r,self.angle)
+        self.position = obj.centre + r*self.radius
+
+    def draw(self):
+        if self.hp >0:
+            screen.blit(self.image,self.position - self.size/2)
+
+    def soundon(self,n = 0): #suona l'ennesima track
+            if self.sound is not None:
+                if type(self.volume) is list:
+                    v = self.volume[n]
+                else:
+                    v = self.volume
+                self.sound[n].set_volume(v)
+    
+            
+            self.sound[n].play()
+
+    def soundoff(self,n=0):
+            if self.hp<=0:
+                self.sound[n].stop()
 
     
 
@@ -301,40 +355,51 @@ class status:
 #creazione degli oggetti
 ########################################################################################################################################
 #lista degli status
+#girelle
+girella = Character(['Media/girella.png'],40,0,1,(np.random.randint(xlim-40),np.random.randint(ylim -40)), (0,0))
 
 #oggetto player
-player = Character("player.png",50,20,3,[xlim/2 - 25, ylim/2 - 25], [0,0])
-player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
-#player.status_effects.append(status(90,'fire'))
+player = Character(["Media/player.png"],50,20,5,[xlim/2 - 25, ylim/2 - 25], [0,0])
+#player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
+
 #oggetto bolognesi
-Bolognesi = Stefano("LEVEL 1/bolognesi.jpeg",200,300,0,[-300,0],[0,0], sound =['audios/bolognesi-passing (mp3cut.net).mp3'],volume = 0.3, spawn=0)
+Bolognesi = Stefano(["Media/LEVEL 1/bolognesi.jpeg"],200,300,0,[-300,0],[0,0], sound =['Media/audios/bolognesi-passing (mp3cut.net).mp3'],volume = 0.3, spawn=0)
 #Bolo_passing = mixer.Sound('audios/bolognesi-passing.mp3')
 #Bolo_passing.set_volume(0.3)
-#oggetto bonati
+#oggetto scudi
+Alba = Character(['Media/LEVEL 1/alba.png'],90,0,0,[0,0],[0,0])
+Alba_spawn_value = 10
 Claudio_image = []
-with os.scandir('LEVEL 1/fotoClaudio') as d:
+shield_list=[]
+with os.scandir('Media/LEVEL 1/fotoClaudio') as d:
     for e in d:
-        Claudio_image.append('LEVEL 1/fotoClaudio/'+ e.name)
+        Claudio_image.append('Media/LEVEL 1/fotoClaudio/'+ e.name)
 #print(image)
-Bonati = Character(np.random.choice(Claudio_image),85,15,0,[0,0],[0,0])
-Bonati_spawn_value= 4
 
+#oggetto rossini
+Rossini_image = []
+with os.scandir('Media/LEVEL 1/hand_rub/frames') as d:
+    for e in d:
+        Rossini_image.append('Media/LEVEL 1/hand_rub/frames/'+ e.name)
+Rossini = Character(Rossini_image,85,15,0,[0,0],[0,0])
+Rossini_spawn_value = 4
+Rossini_frame = 0
 #oggetto meggiolaro e lista dei proiettili
-Meggiolaro = shooter("LEVEL 1/meggioladro.png",200,0,0,[xlim -200,ylim -200],[0,0],0,30, sound=['audios/meggio shooting.mp3'],volume=1)
+Meggiolaro = shooter(["Media/LEVEL 1/meggioladro.png"],200,0,0,[xlim -200,ylim -200],[0,0],0,30, sound=['Media/audios/meggio shooting.mp3'],volume=1)
 Meggiolaro_spawn_value = 2
-
 negative_stauts_list = ['confusion','slowness','enlarge'] #se si vuole randomizzare sulla scelta degli effetti si usa questa lista
-#oggetto Lamanna
 
-Lamanna = Character('LEVEL 1/lamanna.jpeg',90,0,0,[0,0],[0,0])
+
+#oggetto Lamanna
+Lamanna = Character(['Media/LEVEL 1/lamanna.jpeg'],90,0,0,[0,0],[0,0])
 lamanna_spawn_value = 10
 
 #immaginie e size cuori
 heart_size = 60
-heart = game.transform.smoothscale(game.image.load("massimino.png"),(heart_size,heart_size))
+heart = game.transform.smoothscale(game.image.load("Media/massimino.png"),(heart_size,heart_size))
 
 #evento jumpscare
-jumpscare=game.image.load('LEVEL 1/bolo_jumpscare.jpg')
+jumpscare=game.image.load('Media/LEVEL 1/bolo_jumpscare.jpg')
 jumpscare=game.transform.smoothscale(jumpscare,(xlim,ylim))
 event_jumpscare= np.random.randint(5,10)
 
@@ -342,7 +407,7 @@ event_jumpscare= np.random.randint(5,10)
 
 #######################################################################################################################################
 
-#lista in cui salviamo le posizioni del player serve per bonati e servirà anche per meggiolaro e lamanna
+#lista in cui salviamo le posizioni del player serve per Rossini e servirà anche per meggiolaro e lamanna
 #deve essere una lista perché il modo in cui funziona np.append appiattisce in 1D e quindi le posizioni non funzionano più
 #usiamo lista e append nativo di pyton
 last_n_position = []
@@ -352,7 +417,7 @@ soundtrack.play(999)
 game.init()
 running = True
 while running:
-    #score += 1/60
+    #counter += 1/60
     for event in game.event.get():
         if event.type == game.QUIT:
             running = False
@@ -363,13 +428,13 @@ while running:
     clock.tick(30)
     
     #game event jumpscare
-    if event_jumpscare == score:
+    if event_jumpscare == counter:
         screen.blit(jumpscare,(0,0))
         game.display.update()
         game.time.delay(300)
         #time.sleep(0.3)
         event_jumpscare+=np.random.randint(5,15)
-        #score+=1
+        #counter+=1
     ###################################################################################################################
     
 
@@ -432,32 +497,43 @@ while running:
     last_n_position.append(player.position)
     if len(last_n_position) > 30:
         last_n_position = last_n_position[1:]
-    #####################################################################################################################
-
-    #####################################################################################################################
-
-                                                  #BONATI#
-
-    #####################################################################################################################
-    #aggiungo claudio bonati
     
-    if int(score) == Bonati_spawn_value:
-        Bonati_spawn_value = score + np.random.randint(7,13) 
-        Bonati.hp = 1
-        print('Bonati',score, Bonati_spawn_value)
-    if Bonati.hp == 1:
-        Bonati.direction = np.sign(last_n_position[0] - Bonati.position)/np.linalg.norm(np.sign(last_n_position[0] - Bonati.position))
-    if Bonati.hp == 0:
+    #####################################################################################################################
+    #girelle
+    girella.draw()
+    if hit(player,girella,damage=False):
+        girella.position = (np.random.randint(xlim-40),np.random.randint(ylim -40))
+        girella.hp = 1 
+        score +=1
+    #####################################################################################################################
+    
+    #####################################################################################################################
+
+                                                  #Rossini#
+
+    #####################################################################################################################
+    #aggiungo claudio Rossini
+    
+    if int(counter) == Rossini_spawn_value:
+        Rossini_spawn_value = counter + np.random.randint(7,13) 
+        Rossini.hp = 1
+        #print('Rossini',counter, Rossini_spawn_value)
+    if Rossini.hp == 1:
+        Rossini_frame += 0.5
+        Rossini_frame %= len(Rossini_image)
+        Rossini.direction = np.sign(last_n_position[0] - Rossini.position)/np.linalg.norm(np.sign(last_n_position[0] - Rossini.position))
+    if Rossini.hp == 0:
+        Rossini_frame = 0
         angles = [[0,0],[0,ylim],[xlim,0],[xlim,ylim]]
-        Bonati.position = np.array(angles[np.random.randint(0,4)],dtype=float) #per farlo spawnare in punti randomici #randint esclude l'upperbound
+        Rossini.position = np.array(angles[np.random.randint(0,4)],dtype=float) #per farlo spawnare in punti randomici #randint esclude l'upperbound
     
-    Bonati.draw()
-    Bonati.update_position()
+    Rossini.draw(int(Rossini_frame))
+    Rossini.update_position()
     
-    # checko l'hit con bonati
-    hit(player,Bonati)
+    # checko l'hit con Rossini
+    hit(player,Rossini)
     #print(player.hp)
-    #print(Bonati.direction)
+    #print(Rossini.direction)
     #####################################################################################################################
 
     #####################################################################################################################
@@ -466,19 +542,50 @@ while running:
 
     #####################################################################################################################
     #aggiungo Lamanna
-    #if int score è solo un proof of concept poi tocca fare una cosa seria per ora bonati spawna quando lo score è divisibile per 17 e despowna quando viene colpito
-    if int(score) == lamanna_spawn_value:
+    
+    '''if int(counter) == lamanna_spawn_value:
         Lamanna.position = [np.random.randint(0,xlim-Lamanna.size),np.random.randint(0,ylim - Lamanna.size)]
-        lamanna_spawn_value = score + np.random.randint(10,17)
+        lamanna_spawn_value = counter +  1 #np.random.randint(10,17)
         Lamanna.hp = 1
     if Lamanna.hp == 0:
         Lamanna.position = [0,0]
     Lamanna.draw()
-    Lamanna.aura('LEVEL 1/heal.png',3*Lamanna.size, 35)
+    Lamanna.aura('Media/LEVEL 1/heal.png',3*Lamanna.size, 35)
     heal(player,Lamanna,1)
+    '''
+
     #####################################################################################################################
+    
+                                                    #ALBA#
 
+    #####################################################################################################################
+    if int(counter) == Alba_spawn_value:
+        Alba.position = [np.random.randint(0,xlim-Alba.size),np.random.randint(0,ylim - Alba.size)]
+        Alba_spawn_value = counter +  np.random.randint(10,17)
+        Alba.hp = 1
+    if Alba.hp == 0:
+        Alba.position = [0,0]
+    Alba.aura('Media/LEVEL 1/sun-Photoroom.png',3*Lamanna.size, 35)
+    Alba.draw()
+    
+    if hit(player,Alba,damage=False):
+        C1 = player.centre
+        shield_list.append(shield(np.random.choice(Claudio_image),30,90,0,3,1))
+        shield_list.append(shield(np.random.choice(Claudio_image),30,90,120,3,1))
+        shield_list.append(shield(np.random.choice(Claudio_image),30,90,240,3,1))
 
+    index = 0
+    while len(shield_list) > index:
+        shield_list[index].update_coordinates(player)
+        shield_list[index].draw()
+        hit(shield_list[index],Bolognesi)
+        hit(shield_list[index],Rossini)
+        for j in Meggiolaro.projectiles:
+            hit(shield_list[index],j)
+        if shield_list[index].hp <= 0:
+            del shield_list[index]
+        else:
+            index += 1
 
     #####################################################################################################################
 
@@ -493,7 +600,7 @@ while running:
         Bolognesi.accelerate()
     
         #print(Bolognesi.speed)
-        score+=1
+        counter+=1
    
     # choose new spawn side
         Bolognesi.spawn = np.random.randint(0,3)
@@ -524,10 +631,12 @@ while running:
     #checking hit
     if hit(player, Bolognesi):
         Bolognesi.soundoff()
-    hit(Bolognesi,Lamanna,damage = False)
-    if hit(Bolognesi, Bonati):
-        score +=1
+    #hit(Bolognesi,Lamanna,damage = False)
+    if hit(Bolognesi, Rossini):
+        counter +=1
         Bolognesi.soundoff()
+    
+    hit(Bolognesi,Alba,damage=False)
     ################################################################################################################################
 
 
@@ -537,7 +646,7 @@ while running:
 
     ################################################################################################################################
 
-    if score == Meggiolaro_spawn_value:
+    if counter == Meggiolaro_spawn_value:
         Meggiolaro.hp = 1
         
     if Meggiolaro.hp == 1:
@@ -561,7 +670,7 @@ while running:
         if Meggiolaro.timer == 30*4: #30 è il numero di frame quindi 30*4 = 4 secondi
             Meggiolaro.hp = 0
             Meggiolaro.timer = 0
-            Meggiolaro_spawn_value = score + 15
+            Meggiolaro_spawn_value = counter + 15
         Meggiolaro.draw()
     ################################################################################################################################
     #routine di sparo
@@ -589,10 +698,11 @@ while running:
     font = game.font.SysFont('Monocraft', 40)
     text_color = (0, 0, 0)
 
-    #blit dello score
-    score_text = font.render(f"Score: {int(score)}", True, text_color)
-    screen.blit(score_text, (20, 20))  # posizione (x=20, y=20)
-
+    #blit del counter
+    counter_text = font.render(f"counter: {int(counter)}", True, text_color)
+    screen.blit(counter_text, (20, 20))  # posizione (x=20, y=20)
+    girelle_text = font.render(f'girelle: {score}',True,text_color)
+    screen.blit(girelle_text,(20,50))
     #blit degli hp
     for i in range(1,player.hp+1):
         screen.blit(heart,(xlim - i*heart_size,10))
@@ -603,13 +713,13 @@ while running:
     
 
 #end game routine
-background=game.image.load('LEVEL 1/death_screen.jpg')
+background=game.image.load('Media/LEVEL 1/death_screen.jpg')
 background=game.transform.smoothscale(background,(xlim,ylim))
 screen.blit(background,(0,0))
 text_color = (255, 255, 255)
 font = game.font.SysFont('Monocraft', 70)
-score_text = font.render(f"Score: {int(score)}", True, text_color)
-screen.blit(score_text, (300, 480))
+girelle_text = font.render(f"girelle: {int(score)}", True, text_color)
+screen.blit(girelle_text, (300, 480))
 
 game.display.update()
 mixer.stop()
@@ -617,10 +727,8 @@ game.time.delay(3000)
 game.quit()
 
 
-
+#schermo adattivo
 #add pause
 #play audio
 #adattare la size schermo
-#add tredicucci
-#rework claudio
-#ADD GIRELLE
+
