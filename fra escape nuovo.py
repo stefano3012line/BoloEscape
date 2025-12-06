@@ -348,6 +348,11 @@ class shield:
             if self.hp<=0:
                 self.sound[n].stop()
 
+#class event:
+    #def __init__(self,image,):
+
+
+
     
 
 ########################################################################################################################################
@@ -519,7 +524,7 @@ while running:
         Rossini.hp = 1
         #print('Rossini',counter, Rossini_spawn_value)
     if Rossini.hp == 1:
-        Rossini_frame += 0.5
+        Rossini_frame += 1
         Rossini_frame %= len(Rossini_image)
         Rossini.direction = np.sign(last_n_position[0] - Rossini.position)/np.linalg.norm(np.sign(last_n_position[0] - Rossini.position))
     if Rossini.hp == 0:
