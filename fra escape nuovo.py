@@ -108,10 +108,13 @@ class Character:
         self.hittable = True
         self.confused = False
         # Load and scale the image and mask it
-        self.image = game.transform.smoothscale(game.image.load(image), (self.size, self.size))
-        self.rect = self.image.get_rect()
-        self.mask = game.mask.from_surface(self.image)
+        self.image = [game.transform.smoothscale(game.image.load(im), (self.size, self.size)) for im in image]
+        #self.rect = [im.get_rect() for im in self.image ]
+        self.rect = self.image[0].get_rect()
+        #self.mask = [game.mask.from_surface(im) for im in self.image]
+        
         self.rect.topleft = self.position
+        self.mask = game.mask.from_surface(self.image[0])
         #sound variables
         if sound is not None:
             self.sound = [ mixer.Sound(s) for s in sound ]
@@ -128,7 +131,7 @@ class Character:
     @size.setter
     def size(self, new):
         self._size = new
-        self.image = game.transform.smoothscale(self.image, (new, new))
+        self.image = [game.transform.smoothscale(im, (new, new)) for im in self.image]
     
     #centro dell'oggetto (usato in passato per calcolare le hitbox ma ora non serve più)
     @property   
@@ -143,13 +146,17 @@ class Character:
             self.rect.topleft = self.position
     #per updatare la maskera quando l'effetto enlarge ti cambia size
     def update_mask(self):
-        self.rect = self.image.get_rect()
-        self.mask = game.mask.from_surface(self.image)
+        self.rect = self.image[0].get_rect()
+        self.mask = game.mask.from_surface(self.image[0])
     
     #disegna l'oggetto nel punto in cui si trova
-    def draw(self):
+    def draw(self, n=None):
+        if n is not None:
+            i = n
+        else: 
+            i = 0
         if self.hp >0:
-            screen.blit(self.image, self.position)
+            screen.blit(self.image[i], self.position)
 
     def soundon(self,n = 0): #suona l'ennesima track
             if self.sound is not None:
@@ -220,11 +227,6 @@ class Stefano(Character):
             self.direction = np.array([1, 0], dtype=float)
         self.position += self.direction * self.speed/(5*np.sqrt(Bolognesi.size))
         self.rect.topleft = self.position
-    
-    #dato che la size cambia devo cambiare anche il rettangolo altrimenti le hitbox si sfasano
-    def update_mask(self):
-        self.rect = self.image.get_rect()
-        self.mask = game.mask.from_surface(self.image)
 
     #accellera bolognesi ogni volta che esce dallo schermo
     def accelerate(self):
@@ -250,7 +252,7 @@ class shooter(Character):
             directions.append(rotate_Vector(V1.copy(),i))
         #print(direction)
         for k in directions:
-           self.projectiles.append(projectile('Media/heart.png',35,40,1,working_position,k.copy(),type = [np.random.choice(negative_stauts_list)]))  # per adesso applica uno status random
+           self.projectiles.append(projectile(['Media/heart.png'],35,40,1,working_position,k.copy(),type = [np.random.choice(negative_stauts_list)]))  # per adesso applica uno status random
         #return proj #ho effettivamente bisogno di returnarla? no potrebbe essere un array contenuto nella classe e avrebbe più senso
 
 #classe dei proiettili che hanno un tipo e presumibilmente altre cose in futuro
@@ -354,18 +356,18 @@ class shield:
 ########################################################################################################################################
 #lista degli status
 #girelle
-girella = Character('Media/girella.png',40,0,1,(np.random.randint(xlim-40),np.random.randint(ylim -40)), (0,0))
+girella = Character(['Media/girella.png'],40,0,1,(np.random.randint(xlim-40),np.random.randint(ylim -40)), (0,0))
 
 #oggetto player
-player = Character("Media/player.png",50,20,5,[xlim/2 - 25, ylim/2 - 25], [0,0])
+player = Character(["Media/player.png"],50,20,5,[xlim/2 - 25, ylim/2 - 25], [0,0])
 #player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
 
 #oggetto bolognesi
-Bolognesi = Stefano("Media/LEVEL 1/bolognesi.jpeg",200,300,0,[-300,0],[0,0], sound =['Media/audios/bolognesi-passing (mp3cut.net).mp3'],volume = 0.3, spawn=0)
+Bolognesi = Stefano(["Media/LEVEL 1/bolognesi.jpeg"],200,300,0,[-300,0],[0,0], sound =['Media/audios/bolognesi-passing (mp3cut.net).mp3'],volume = 0.3, spawn=0)
 #Bolo_passing = mixer.Sound('audios/bolognesi-passing.mp3')
 #Bolo_passing.set_volume(0.3)
 #oggetto scudi
-Alba = Character('Media/LEVEL 1/alba.png',90,0,0,[0,0],[0,0])
+Alba = Character(['Media/LEVEL 1/alba.png'],90,0,0,[0,0],[0,0])
 Alba_spawn_value = 10
 Claudio_image = []
 shield_list=[]
@@ -375,17 +377,21 @@ with os.scandir('Media/LEVEL 1/fotoClaudio') as d:
 #print(image)
 
 #oggetto rossini
-Rossini = Character('Media/rossini.png',85,15,0,[0,0],[0,0])
-Rossini_spawn_value= 4
-
+Rossini_image = []
+with os.scandir('Media/LEVEL 1/hand_rub/frames') as d:
+    for e in d:
+        Rossini_image.append('Media/LEVEL 1/hand_rub/frames/'+ e.name)
+Rossini = Character(Rossini_image,85,15,0,[0,0],[0,0])
+Rossini_spawn_value = 4
+Rossini_frame = 0
 #oggetto meggiolaro e lista dei proiettili
-Meggiolaro = shooter("Media/LEVEL 1/meggioladro.png",200,0,0,[xlim -200,ylim -200],[0,0],0,30, sound=['Media/audios/meggio shooting.mp3'],volume=1)
+Meggiolaro = shooter(["Media/LEVEL 1/meggioladro.png"],200,0,0,[xlim -200,ylim -200],[0,0],0,30, sound=['Media/audios/meggio shooting.mp3'],volume=1)
 Meggiolaro_spawn_value = 2
 negative_stauts_list = ['confusion','slowness','enlarge'] #se si vuole randomizzare sulla scelta degli effetti si usa questa lista
 
 
 #oggetto Lamanna
-Lamanna = Character('Media/LEVEL 1/lamanna.jpeg',90,0,0,[0,0],[0,0])
+Lamanna = Character(['Media/LEVEL 1/lamanna.jpeg'],90,0,0,[0,0],[0,0])
 lamanna_spawn_value = 10
 
 #immaginie e size cuori
@@ -513,12 +519,15 @@ while running:
         Rossini.hp = 1
         #print('Rossini',counter, Rossini_spawn_value)
     if Rossini.hp == 1:
+        Rossini_frame += 0.5
+        Rossini_frame %= len(Rossini_image)
         Rossini.direction = np.sign(last_n_position[0] - Rossini.position)/np.linalg.norm(np.sign(last_n_position[0] - Rossini.position))
     if Rossini.hp == 0:
+        Rossini_frame = 0
         angles = [[0,0],[0,ylim],[xlim,0],[xlim,ylim]]
         Rossini.position = np.array(angles[np.random.randint(0,4)],dtype=float) #per farlo spawnare in punti randomici #randint esclude l'upperbound
     
-    Rossini.draw()
+    Rossini.draw(int(Rossini_frame))
     Rossini.update_position()
     
     # checko l'hit con Rossini
@@ -622,10 +631,12 @@ while running:
     #checking hit
     if hit(player, Bolognesi):
         Bolognesi.soundoff()
-    hit(Bolognesi,Lamanna,damage = False)
+    #hit(Bolognesi,Lamanna,damage = False)
     if hit(Bolognesi, Rossini):
         counter +=1
         Bolognesi.soundoff()
+    
+    hit(Bolognesi,Alba,damage=False)
     ################################################################################################################################
 
 
@@ -716,7 +727,7 @@ game.time.delay(3000)
 game.quit()
 
 
-
+#schermo adattivo
 #add pause
 #play audio
 #adattare la size schermo
