@@ -6,18 +6,11 @@ import numpy as np
 import itertools as iter 
 from pygame import mixer
 
-import time
-import os
-import pygame as game
-import numpy as np
-import itertools as iter 
-from pygame import mixer
-
 mixer.init()
 
 #dimensioni schermo
 xlim,ylim=1280,720
-screen = game.display.set_mode((xlim,ylim))
+screen = game.display.set_mode((xlim,ylim),game.FULLSCREEN)
 clock = game.time.Clock()
 background=game.image.load('Media/LEVEL 1/unipipi.jpeg')
 background=game.transform.smoothscale(background,(xlim,ylim))
@@ -526,7 +519,7 @@ while running:
     if Rossini.hp == 1:
         Rossini_frame += 1
         Rossini_frame %= len(Rossini_image)
-        Rossini.direction = np.sign(last_n_position[0] - Rossini.position)/np.linalg.norm(np.sign(last_n_position[0] - Rossini.position))
+        Rossini.direction = (last_n_position[0] - Rossini.position)/np.linalg.norm(last_n_position[0] - Rossini.position)
     if Rossini.hp == 0:
         Rossini_frame = 0
         angles = [[0,0],[0,ylim],[xlim,0],[xlim,ylim]]
