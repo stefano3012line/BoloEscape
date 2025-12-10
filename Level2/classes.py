@@ -2,7 +2,7 @@ import numpy as np
 import pygame as game
 from pygame import mixer
 from andreagay import *
-
+import math 
 
 class Character:
     def __init__(self, image, size, speed,hp, position, direction, sound = None,volume= None, aura_frame = 0):
@@ -129,7 +129,7 @@ class shooter(Character):
         self.spread = spread #ampiezza angolare dello sparo (in gradi)
         self.possible_statuses = possible_statuses
         self.projectiles =[]
-
+        self .rockets = []
     def addtimer(self):
         if self.hp > 0:
             self.timer +=1
@@ -146,7 +146,9 @@ class shooter(Character):
         for k in directions:
            self.projectiles.append(projectile(projectile_sprite, 35, 40, 1, working_position, k.copy(), type = [np.random.choice(self.possible_statuses)]))  # per adesso applica uno status random
         #return proj #ho effettivamente bisogno di returnarla? no potrebbe essere un array contenuto nella classe e avrebbe più senso
-
+    def load_rocket(self, rocket_sprite):
+        working_position = self.position.copy() +(0,self.size/2) 
+        self.rockets.append(Rocket((rocket_sprite),(80,100),10,(0,0), working_position, 1 ))
 #classe dei proiettili che hanno un tipo e presumibilmente altre cose in futuro
 class projectile(Character):
     def __init__(self, image, size, speed,hp, position, direction, type=None):
@@ -197,12 +199,59 @@ class status:
         #print(self.image)
         screen.blit(self.image,(xpos,ypos))
 
-class laser(Character):
-    def __init__(self,image,size,speed,direction,position,sound=None, volume = None):
-        self.size = np.array([size],dtype='float')
+class Rocket:
+    def __init__(self,image,size,speed,direction,position,hp,sound=None, volume = None):
+        self.size = size
+        self.hp = hp
+        self.speed = speed
+        #movement variables
+        self.position = np.array(position, dtype=float)
+        self.direction = np.array(direction, dtype=float)
+        self.timer = 0
+        self.angle = 0 
+        #image variables #need to copy image to maintain quality during rotation
         self.image = game.transform.smoothscale(game.image.load(image), self.size)
         self.rect = self.image.get_rect()
-        self.mask = game.mask.from_surface(self.image)
         self.rect.topleft = self.position
-        self.blinks = 0
-        super().__init__(speed,direction,position,sound,volume)
+        self.mask = game.mask.from_surface(self.image)
+        #audio variables
+        if sound is not None:
+            self.sound = [ mixer.Sound(s) for s in sound ]
+        self.volume = volume 
+
+    @property   
+    def centre(self):
+        #Return the center point of the character
+        return self.position + np.array([self.size[0] / 2, self.size[1] / 2])
+
+    def tracking(self,target):
+        self.direction = (target - self.centre)/np.linalg.norm((target-self.centre))
+        self.angle = math.degrees(math.atan2(- self.direction[1], self.direction[0]))
+    def update_position(self):
+        if self.hp> 0: #controllo che l'hp dell'oggetto sia maggiore di zero se no si ferma (boh non so se è necessario ci sta un botto di double check in sto codice)
+            self.position += self.direction * self.speed
+            self.rect.topleft = self.position
+    def draw(self,screen): 
+        if self.hp >0:
+            c = self.centre
+            razzo = game.transform.rotate(self.image, self.angle - 90)
+            razzo_rect = razzo.get_rect(center = c)
+            #draw image
+            screen.blit(razzo, razzo_rect)
+    def add_timer(self):
+        self.timer += 1
+
+    def soundon(self,n = 0): #suona l'ennesima track
+            if self.sound is not None:
+                if type(self.volume) is list:
+                    v = self.volume[n]
+                else:
+                    v = self.volume
+                self.sound[n].set_volume(v)
+    
+            
+            self.sound[n].play()
+
+    def soundoff(self,n=0):
+            if self.hp<=0:
+                self.sound[n].stop()

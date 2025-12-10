@@ -50,6 +50,12 @@ rotate_animation(LASER_v_gialo,90)
 laser_o = [LASER_o_blue,LASER_o_red,LASER_o_green,LASER_o_gialo]
 laser_v = [LASER_v_blue,LASER_v_red,LASER_v_green,LASER_v_gialo]
 color = 0
+#tomadin
+tomadin = shooter(['Level2/Media2/tomadin.png'], 200,0,0,(xlim-205,ylim-205),(0,0),0,None,None)
+tomadin_spawn_value = 2
+#razzo
+razzo = Rocket('Level2/Media2/razzo.png',(80,110),10,(0,0),(0,0),0) 
+
 game.init()
 running = True
 
@@ -61,7 +67,7 @@ while running:
     #sistema di coordinate centrato in alto a sinistra e background
     screen.blit(background,(0,0))
 
-#################################################PLAYER########################################################
+#################################################  PLAYER  ########################################################
     player.update_status_effects(draw=True)
     player.draw(screen)
     #si ridefinisce la posizione ogni frame
@@ -73,8 +79,7 @@ while running:
     last_n_position.append(player.position)
     if len(last_n_position) > 30:
         last_n_position = last_n_position[1:]
-    
-    
+############################################## TREDICUCCI ###########################################################
     tredicucci.addtimer()
     if 30 <= tredicucci.timer<= 160:
         screen.blit(laser_o[color](),(0,tredicucci.centre[1]))
@@ -86,6 +91,32 @@ while running:
         tredicucci.timer = 0 
         counter +=1
     tredicucci.draw(screen)
+##############################################  tomadin  ################################################################
+    if counter == tomadin_spawn_value:
+        tomadin.hp=1
+
+    
+    if tomadin.hp >=1:
+        #print(tomadin.timer)
+        tomadin.draw(screen)
+        tomadin.addtimer()
+        if tomadin.timer == 120:
+            tomadin.timer = 0
+            tomadin.hp = 0
+            tomadin_spawn_value = counter + 20
+        if tomadin.timer == 60:
+            tomadin.load_rocket(rocket_sprite='Level2/Media2/razzo.png')
+            #print(tomadin.rockets)
+
+    for r in tomadin.rockets:
+        r.tracking(player.centre)
+        r.update_position()
+        r.draw(screen)
+
+
+
+
+
 ###############################################################################################################
     #blit del counter
     counter_text = font.render(f"counter: {int(counter)}", True, text_color)
