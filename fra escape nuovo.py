@@ -51,7 +51,45 @@ def hit(obj1, obj2,key=None,t=None,damage=True, both=False):
             if obj2.hittable: 
                 obj2.hp -= 1
             return True
+#funzione per i comandi
+def command(obj, lim):
+    direction_pressed = [True,True]
+    if not(obj.confused):
+        
+        if (game.key.get_pressed()[game.K_s] or game.key.get_pressed()[game.K_DOWN] )and obj.position[1]<= lim[1] - (obj.size + obj.speed):
+            obj.direction[1] = 1
+            direction_pressed[1] = not direction_pressed[1] 
+        if (game.key.get_pressed()[game.K_w] or game.key.get_pressed()[game.K_UP])and obj.position[1]>= obj.speed:
+            obj.direction[1] = -1
+            direction_pressed[1] = not direction_pressed[1]
+        if (game.key.get_pressed()[game.K_d] or game.key.get_pressed()[game.K_RIGHT]) and obj.position[0]<= lim[0]  -(obj.size+ obj.speed):
+            obj.direction[0] = 1
+            direction_pressed[0] = not direction_pressed[0]
+        if (game.key.get_pressed()[game.K_a] or game.key.get_pressed()[game.K_LEFT]) and obj.position[0] >= obj.speed:
+            obj.direction[0] = -1
+            direction_pressed[0] = not direction_pressed[0]
+        if direction_pressed[0]:
+            obj.direction[0] = 0
+        if direction_pressed[1]:
+            obj.direction[1] = 0
 
+    elif obj.confused:
+        if (game.key.get_pressed()[game.K_w] or game.key.get_pressed()[game.K_UP])and obj.position[1]<= lim[1]  - (obj.size + obj.speed):
+            obj.direction[1] = 1
+            direction_pressed[1] = not direction_pressed[1] 
+        if (game.key.get_pressed()[game.K_s] or game.key.get_pressed()[game.K_DOWN] )and obj.position[1]>= obj.speed:
+            obj.direction[1] = -1
+            direction_pressed[1] = not direction_pressed[1]
+        if (game.key.get_pressed()[game.K_a] or game.key.get_pressed()[game.K_LEFT]) and obj.position[0]<= lim[0]  -(obj.size+ obj.speed):
+            obj.direction[0] = 1
+            direction_pressed[0] = not direction_pressed[0]
+        if (game.key.get_pressed()[game.K_d] or game.key.get_pressed()[game.K_RIGHT]) and obj.position[0] >= obj.speed:
+            obj.direction[0] = -1
+            direction_pressed[0] = not direction_pressed[0]
+        if direction_pressed[0]:
+            obj.direction[0] = 0
+        if direction_pressed[1]:
+            obj.direction[1] = 0
 #fuznione che ti cura quando hitti un oggetto # il primo oggetto è il destinatario dell'healing
 def heal(obj1,obj2,n):
     if obj1.hp > 0 and obj2.hp > 0: #per l'healing non serve in effetti
@@ -450,20 +488,21 @@ while running:
     player.draw()
     #si ridefinisce la posizione ogni frame
     player.direction = np.array([0,0])
-    direction_pressed = [True,True]
+    #direction_pressed = [True,True]
     #player movement
-
+    command(player,(xlim,ylim))
+    '''
     if not(player.confused):
-        if game.key.get_pressed()[game.K_s]and player.position[1]<= ylim - (player.size + player.speed):
+        if (game.key.get_pressed()[game.K_s] or game.key.get_pressed()[game.K_DOWN] )and player.position[1]<= ylim - (player.size + player.speed):
             player.direction[1] = 1
             direction_pressed[1] = not direction_pressed[1] 
-        if game.key.get_pressed()[game.K_w]and player.position[1]>= player.speed:
+        if (game.key.get_pressed()[game.K_w] or game.key.get_pressed()[game.K_UP])and player.position[1]>= player.speed:
             player.direction[1] = -1
             direction_pressed[1] = not direction_pressed[1]
-        if game.key.get_pressed()[game.K_d] and player.position[0]<= xlim -(player.size+ player.speed):
+        if (game.key.get_pressed()[game.K_d] or game.key.get_pressed()[game.K_RIGHT]) and player.position[0]<= xlim -(player.size+ player.speed):
             player.direction[0] = 1
             direction_pressed[0] = not direction_pressed[0]
-        if game.key.get_pressed()[game.K_a] and player.position[0] >= player.speed:
+        if (game.key.get_pressed()[game.K_a] or game.key.get_pressed()[game.K_LEFT]) and player.position[0] >= player.speed:
             player.direction[0] = -1
             direction_pressed[0] = not direction_pressed[0]
         if direction_pressed[0]:
@@ -472,22 +511,22 @@ while running:
             player.direction[1] = 0
 
     elif player.confused:
-        if game.key.get_pressed()[game.K_w]and player.position[1]<= ylim - (player.size + player.speed):
+        if (game.key.get_pressed()[game.K_w] or game.key.get_pressed()[game.K_UP])and player.position[1]<= ylim - (player.size + player.speed):
             player.direction[1] = 1
             direction_pressed[1] = not direction_pressed[1] 
-        if game.key.get_pressed()[game.K_s]and player.position[1]>= player.speed:
+        if (game.key.get_pressed()[game.K_s] or game.key.get_pressed()[game.K_DOWN] )and player.position[1]>= player.speed:
             player.direction[1] = -1
             direction_pressed[1] = not direction_pressed[1]
-        if game.key.get_pressed()[game.K_a] and player.position[0]<= xlim -(player.size+ player.speed):
+        if (game.key.get_pressed()[game.K_a] or game.key.get_pressed()[game.K_LEFT]) and player.position[0]<= xlim -(player.size+ player.speed):
             player.direction[0] = 1
             direction_pressed[0] = not direction_pressed[0]
-        if game.key.get_pressed()[game.K_d] and player.position[0] >= player.speed:
+        if (game.key.get_pressed()[game.K_d] or game.key.get_pressed()[game.K_RIGHT]) and player.position[0] >= player.speed:
             player.direction[0] = -1
             direction_pressed[0] = not direction_pressed[0]
         if direction_pressed[0]:
             player.direction[0] = 0
         if direction_pressed[1]:
-            player.direction[1] = 0
+            player.direction[1] = 0'''
 
 
     player.update_position()
