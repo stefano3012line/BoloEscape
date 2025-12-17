@@ -36,8 +36,8 @@ def hit(obj1, obj2, key=None, t=None, damage=True, both=False):
             return True
 
 def command(obj, lim):
+    direction_pressed = [True,True]
     if not(obj.confused):
-        direction_pressed = [True,True]
         if (game.key.get_pressed()[game.K_s] or game.key.get_pressed()[game.K_DOWN] )and obj.position[1]<= lim[1] - (obj.size + obj.speed):
             obj.direction[1] = 1
             direction_pressed[1] = not direction_pressed[1] 
@@ -87,8 +87,7 @@ def heal(obj1,obj2,n):
             return True
                 
 
-#funzione che ruota i vettori #serve per meggiolaro
-
+#funzione che ruota un vettore di un angolo theta in gradi
 def rotate_Vector(V,phi):
     theta = phi*np.pi/180
     R = np.array([[np.cos(theta), -np.sin(theta)],
