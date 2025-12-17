@@ -204,7 +204,6 @@ class Character:
             if self.hp<=0:
                 self.sound[n].stop()
 
-
     def aura(self,pic,dim,frames): #gli diamo il frame dall'esterno così posso controllarlo dentro il while frame per frame ?
         if self.hp > 0:
             im = game.image.load(pic)
@@ -214,7 +213,17 @@ class Character:
                 self.aura_frame = 0
             a = game.transform.smoothscale(im, (dim_array[self.aura_frame],dim_array[self.aura_frame]))
             screen.blit(a,self.centre -0.5*dim_array[self.aura_frame])
-
+    def dodge(self,obj,treshold, acc):
+        v = self.centre - obj.centre
+        r = np.linalg.norm(self.centre - obj.centre)
+        v /= r
+        p = np.array([-v[1], v[0]])
+        p /= np.linalg.norm(p)
+        s = (np.dot(v,p))
+        if r < treshold:
+            self.position = self.position + v*self.speed 
+            self.position = self.position + s*p*self.speed*acc/(r+1)
+    
 
 
     #controlla se ci sono status effect in caso li applico deapplico quelli scaduti e li rimuovo dalla lista di status effect
@@ -393,7 +402,9 @@ class shield:
 #lista degli status
 #girelle
 girella = Character(['Media/girella.png'],40,0,1,(np.random.randint(xlim-40),np.random.randint(ylim -40)), (0,0))
-
+#vichi
+vichi = Character(['Media/LEVEL 1/vichi.jpeg'],40,12,0,(np.random.randint(xlim-40),np.random.randint(ylim -40)), (0,0))
+vichi_spawn_value = 2
 #oggetto player
 player = Character(["Media/player.png"],50,20,5,[xlim/2 - 25, ylim/2 - 25], [0,0])
 #player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
@@ -491,44 +502,6 @@ while running:
     #direction_pressed = [True,True]
     #player movement
     command(player,(xlim,ylim))
-    '''
-    if not(player.confused):
-        if (game.key.get_pressed()[game.K_s] or game.key.get_pressed()[game.K_DOWN] )and player.position[1]<= ylim - (player.size + player.speed):
-            player.direction[1] = 1
-            direction_pressed[1] = not direction_pressed[1] 
-        if (game.key.get_pressed()[game.K_w] or game.key.get_pressed()[game.K_UP])and player.position[1]>= player.speed:
-            player.direction[1] = -1
-            direction_pressed[1] = not direction_pressed[1]
-        if (game.key.get_pressed()[game.K_d] or game.key.get_pressed()[game.K_RIGHT]) and player.position[0]<= xlim -(player.size+ player.speed):
-            player.direction[0] = 1
-            direction_pressed[0] = not direction_pressed[0]
-        if (game.key.get_pressed()[game.K_a] or game.key.get_pressed()[game.K_LEFT]) and player.position[0] >= player.speed:
-            player.direction[0] = -1
-            direction_pressed[0] = not direction_pressed[0]
-        if direction_pressed[0]:
-            player.direction[0] = 0
-        if direction_pressed[1]:
-            player.direction[1] = 0
-
-    elif player.confused:
-        if (game.key.get_pressed()[game.K_w] or game.key.get_pressed()[game.K_UP])and player.position[1]<= ylim - (player.size + player.speed):
-            player.direction[1] = 1
-            direction_pressed[1] = not direction_pressed[1] 
-        if (game.key.get_pressed()[game.K_s] or game.key.get_pressed()[game.K_DOWN] )and player.position[1]>= player.speed:
-            player.direction[1] = -1
-            direction_pressed[1] = not direction_pressed[1]
-        if (game.key.get_pressed()[game.K_a] or game.key.get_pressed()[game.K_LEFT]) and player.position[0]<= xlim -(player.size+ player.speed):
-            player.direction[0] = 1
-            direction_pressed[0] = not direction_pressed[0]
-        if (game.key.get_pressed()[game.K_d] or game.key.get_pressed()[game.K_RIGHT]) and player.position[0] >= player.speed:
-            player.direction[0] = -1
-            direction_pressed[0] = not direction_pressed[0]
-        if direction_pressed[0]:
-            player.direction[0] = 0
-        if direction_pressed[1]:
-            player.direction[1] = 0'''
-
-
     player.update_position()
 
     last_n_position.append(player.position)
@@ -575,21 +548,18 @@ while running:
 
     #####################################################################################################################
 
-                                                  #LAMANNA#
+                                                  #VICHI#
 
     #####################################################################################################################
     #aggiungo Lamanna
-    
-    '''if int(counter) == lamanna_spawn_value:
-        Lamanna.position = [np.random.randint(0,xlim-Lamanna.size),np.random.randint(0,ylim - Lamanna.size)]
-        lamanna_spawn_value = counter +  1 #np.random.randint(10,17)
-        Lamanna.hp = 1
-    if Lamanna.hp == 0:
-        Lamanna.position = [0,0]
-    Lamanna.draw()
-    Lamanna.aura('Media/LEVEL 1/heal.png',3*Lamanna.size, 35)
-    heal(player,Lamanna,1)
-    '''
+    vichi.draw()
+    if counter == vichi_spawn_value:
+        vichi.hp = 1
+    if vichi.hp == 1:
+        vichi.dodge(player,135,300)
+    if outofbound(vichi,xlim,ylim) or heal(player,vichi,n=2):
+        vichi.position = (np.random.randint(xlim-100),np.random.randint(ylim -100))
+        vichi_spawn_value = score + np.random.randint(20,30)
 
     #####################################################################################################################
     

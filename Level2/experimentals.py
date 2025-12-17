@@ -28,8 +28,8 @@ soundtrack = mixer.Sound('Media/audios/21. Loonboon IN-GAME.mp3')
 
 
 #girelle
-girella = Character(['Media/girella.png'],40,0,1,(np.random.randint(xlim-40),np.random.randint(ylim -40)), (0,0))
-#oggetto player
+vichi = Character(['Media/LEVEL 1/vichi.jpeg'],40,12,1,(np.random.randint(xlim-40),np.random.randint(ylim -40)), (0,0))
+#oggetto player 
 player = Character(["Media/player.png"],50,20,5,[xlim/2 - 25, ylim/2 - 25], [0,0])
 last_n_position=[]
 #player.status_effects.append(status(9000000000000, 'invincible')) #per diventare invincibile
@@ -55,7 +55,12 @@ tomadin = shooter(['Level2/Media2/tomadin.png'], 200,0,0,(xlim-205,ylim-205),(0,
 tomadin_spawn_value = 2
 #razzo
 razzo = Rocket('Level2/Media2/razzo.png',(80,110),10,(0,0),(0,0),0) 
-
+#esplosione
+exp_path = []
+for f in range(12):
+    exp_path.append(f'Level2/Media2/explosion/frame_{f}.png')
+#print(exp_path)
+esplosione = Animation_explosion(exp_path,1.5) #path dell'esplosione e riscalamento
 game.init()
 running = True
 
@@ -66,7 +71,14 @@ while running:
             running = False
     #sistema di coordinate centrato in alto a sinistra e background
     screen.blit(background,(0,0))
-
+#################################################  GIRELLA ########################################################
+    vichi.draw(screen)
+    if vichi.hp == 1:
+        vichi.dodge(player,135,300)
+    if outofbound(vichi,xlim,ylim) or hit(player,vichi,damage=False):
+        vichi.position = (np.random.randint(xlim-40),np.random.randint(ylim -40))
+        vichi.hp = 1 
+        score +=1
 #################################################  PLAYER  ########################################################
     player.update_status_effects(draw=True)
     player.draw(screen)
@@ -91,11 +103,9 @@ while running:
         tredicucci.timer = 0 
         counter +=1
     tredicucci.draw(screen)
-##############################################  tomadin  ################################################################
+##############################################  TOMADIN  ################################################################
     if counter == tomadin_spawn_value:
         tomadin.hp=1
-
-    
     if tomadin.hp >=1:
         #print(tomadin.timer)
         tomadin.draw(screen)
@@ -103,16 +113,24 @@ while running:
         if tomadin.timer == 120:
             tomadin.timer = 0
             tomadin.hp = 0
-            tomadin_spawn_value = counter + 20
+            tomadin_spawn_value = counter + 5
         if tomadin.timer == 60:
             tomadin.load_rocket(rocket_sprite='Level2/Media2/razzo.png')
             #print(tomadin.rockets)
-
     for r in tomadin.rockets:
         r.tracking(player.centre)
         r.update_position()
         r.draw(screen)
-
+        r.add_timer()
+        if r.timer==120:
+            #tomadin.rockets.remove(r)
+            esplosione.run=True
+            r.hp=0
+        d = 60
+        esplosione.draw(screen,r.centre,d)
+        if r.timer==120 + d:
+            tomadin.rockets.remove(r)
+    #print(tomadin.rockets)
 
 
 

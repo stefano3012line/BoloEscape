@@ -14,7 +14,7 @@ def hit(obj1, obj2, key=None, t=None, damage=True, both=False):
             if obj1.hittable: 
                 if damage:
                     obj1.hp -= 1
-                obj1.status_effects.append(status(30,'invincible')) #di default ti rende invincibile per mezzo secondo 
+                #obj1.status_effects.append(status(30,'invincible')) #di default ti rende invincibile per mezzo secondo 
                 if t is not None:        #aggiunge un altro effetto se voluto
                     if key is not None:
                         for i,j in zip(t,key):
@@ -97,7 +97,7 @@ def rotate_Vector(V,phi):
 #funzione che calcola se un oggetto è out of bound
 def outofbound(obj,x,y):
     if (obj.position[0] < -obj.size or 
-       obj.position[0] > x + obj.size or
+       obj.position[0] > x  or
         obj.position[1] < -obj.size or
-        obj.position[1] > y + obj.size):
+        obj.position[1] > y):
         return True

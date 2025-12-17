@@ -58,6 +58,17 @@ class Character:
             self.position += self.direction * self.speed
             self.rect.topleft = self.position
     #per updatare la maskera quando l'effetto enlarge ti cambia size
+    def dodge(self,obj,treshold, acc):
+        v = self.centre - obj.centre
+        r = np.linalg.norm(self.centre - obj.centre)
+        v /= r
+        p = np.array([-v[1], v[0]])
+        p /= np.linalg.norm(p)
+        s = (np.dot(v,p))
+        if r < treshold:
+            self.position = self.position + v*self.speed 
+            self.position = self.position + s*p*self.speed*acc/(r+1)
+    
     def update_mask(self):
         self.rect = self.image[0].get_rect()
         self.mask = game.mask.from_surface(self.image[0])

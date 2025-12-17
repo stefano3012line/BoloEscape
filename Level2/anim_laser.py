@@ -2,8 +2,8 @@ from dataclasses import dataclass
 import pygame as pg
 from math import cos
 from anim_transform import *
-
-
+import numpy as np 
+from pygame import mixer
 class AnimationLaser:
     FPS = 30
 
@@ -44,6 +44,35 @@ class AnimationLaser:
             (0, (self.height - dh) / 2)
         )
         return surf
+class Animation_explosion:
+    def __init__(self,img,scale,sound=None, volume=1):
+        self.img = [pg.transform.scale_by(pg.image.load(im),scale) for im in img]
+        self.i_frame = 0
+        self.run=False
+        if sound is not None:
+            self.sound = [ mixer.Sound(s) for s in sound ]
+        self.volume = volume 
+    def draw(self,screen,c,duration): #duration frames
+            if self.run==True:
+                exp_rect = self.img[np.int(self.i_frame)].get_rect(center = c)
+                #draw image
+                screen.blit(self.img[np.int(self.i_frame)], exp_rect)
+                self.i_frame += len(self.img)/duration
+                if np.int(self.i_frame) == len(self.img):
+                    self.run=False
+                    self.i_frame=0
+            
+    def soundon(self,n = 0): #suona l'ennesima track
+            if self.sound is not None:
+                if type(self.volume) is list:
+                    v = self.volume[n]
+                else:
+                    v = self.volume
+                self.sound[n].set_volume(v)
+            self.sound[n].play()
+    def soundoff(self,n=0):
+            if self.hp<=0:
+                self.sound[n].stop()
 
 def rotate_animation(animation, deg):
     # This is wrong, please don't use it, unless you know
